@@ -2,6 +2,8 @@ package com.example.innkeeper.controllers;
 
 import com.example.innkeeper.entities.Hospede;
 import com.example.innkeeper.repository.HospedeRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -9,10 +11,18 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/hospedes")
+@Tag(
+        name = "Hóspedes",
+        description = "Operações relacionadas ao gerenciamento de hóspedes.")
 public class HospedeController {
 
     @Autowired
     private HospedeRepository hospedeRepository;
+
+    @Operation(
+            summary = "Listar hóspedes",
+            description = "Retorna todos os hóspedes cadastrados no sistema."
+    )
 
     @GetMapping
     public ResponseEntity<?> listarTodos() {

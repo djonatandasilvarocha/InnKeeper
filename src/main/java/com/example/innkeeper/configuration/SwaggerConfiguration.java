@@ -24,7 +24,7 @@ public class SwaggerConfiguration {
                                 .scheme("bearer")
                                 .bearerFormat("JWT")
                 ))
-                //Acaba aqui
+                //Acaba aqui!
                 .info(new Info().title("InnKeeper").version("1.0").description("API para aula da 4ª Fase")
                 );
 

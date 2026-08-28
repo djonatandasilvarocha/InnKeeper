@@ -27,7 +27,7 @@ public class AuthController {
         if (loginRequest.email().equals("string")&& loginRequest.senha().equals("string")){
 
             var token = tokenService.gerarToken(loginRequest.email());
-            //Gerar o token
+            //Gerar o token!
             return ResponseEntity.ok(token);
         }
         return ResponseEntity.status(HttpURLConnection.HTTP_UNAUTHORIZED).build();

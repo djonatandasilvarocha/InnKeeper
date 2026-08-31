@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +21,9 @@ public class UsuarioController {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @GetMapping
     @Operation(summary = "Metodo de consulta de lista de usuários!", description = "Metodo responsavel em efetuar a consulta de todos os usuarios sem filtro!")
@@ -41,12 +45,18 @@ public class UsuarioController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Metodo de criação de usuários!", description = "Metodo responsavel em efetuar a criação de novos usuarios!")
-    public ResponseEntity<Usuario> criar(@RequestBody Usuario usuario) {
+    @Operation(
+            summary = "Metodo de criação de usuários!",
+            description = "Metodo responsavel em efetuar a criação de novos usuarios!")
+    public ResponseEntity<Usuario> criar(
+            @RequestBody Usuario usuario) {
+
+        usuario.setSenha(
+                passwordEncoder.encode(usuario.getSenha()));
 
         var usuarioBanco = usuarioRepository.save(usuario);
-        return ResponseEntity.ok(usuarioBanco);
 
+        return ResponseEntity.ok(usuarioBanco);
     }
 
     @PatchMapping("/{id}/status")

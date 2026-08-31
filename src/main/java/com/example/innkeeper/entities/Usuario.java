@@ -6,6 +6,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Data
 @NoArgsConstructor
@@ -25,5 +27,9 @@ public class Usuario {
     private String email;
 
     private EnumStatusUsuario status;
+
+    private String tokenRecuperacaoSenha;
+
+    private LocalDateTime expiracaoTokenRecuperacao;
 
 }

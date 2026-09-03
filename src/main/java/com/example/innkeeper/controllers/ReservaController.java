@@ -1,5 +1,6 @@
 package com.example.innkeeper.controllers;
 
+import com.example.innkeeper.entities.EnumStatusReserva;
 import com.example.innkeeper.entities.Reserva;
 import com.example.innkeeper.repository.ReservaRepository;
 import io.swagger.v3.oas.annotations.Operation;
@@ -8,6 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
+import java.time.temporal.ChronoUnit;
 
 @RestController
 @RequestMapping("/reservas")
@@ -56,8 +60,8 @@ public class ReservaController {
         reservaAtual.dataSaida = reserva.dataSaida;
         reservaAtual.valorTotal = reserva.valorTotal;
         reservaAtual.status = reserva.status;
-        reservaAtual.setHospede(reserva.getHospede());
-        reservaAtual.setQuarto(reserva.getQuarto());
+        reservaAtual.hospede = reserva.hospede;
+        reservaAtual.quarto = reserva.quarto;
 
         return ResponseEntity.ok(reservaRepository.save(reservaAtual));
     }
@@ -84,23 +88,68 @@ public class ReservaController {
             reservaAtual.dataSaida = reserva.dataSaida;
         }
 
-        if (reserva.valorTotal != null) {
-            reservaAtual.valorTotal = reserva.valorTotal;
-        }
-
         if (reserva.status != null) {
             reservaAtual.status = reserva.status;
         }
 
-        if (reserva.getHospede() != null) {
-            reservaAtual.setHospede(reserva.getHospede());
+        if (reserva.hospede != null) {
+            reservaAtual.hospede = reserva.hospede;
         }
 
-        if (reserva.getQuarto() != null) {
-            reservaAtual.setQuarto(reserva.getQuarto());
+        if (reserva.quarto != null) {
+            reservaAtual.quarto = reserva.quarto;
         }
 
         return ResponseEntity.ok(reservaRepository.save(reservaAtual));
+    }
+
+    // PATCH - Realizar check-out
+    @PatchMapping("/{id}/checkout")
+    public ResponseEntity<Reserva> checkout(@PathVariable Long id) {
+
+        var reservaBanco = reservaRepository.findById(id);
+
+        if (reservaBanco.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Reserva reserva = reservaBanco.get();
+
+        // Verifica se a reserva já foi finalizada
+        if (reserva.status == EnumStatusReserva.FINALIZADA) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        // Verifica se a reserva foi cancelada
+        if (reserva.status == EnumStatusReserva.CANCELADA) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        // Calcula a quantidade de dias da estadia
+        long dias = ChronoUnit.DAYS.between(
+                reserva.dataEntrada,
+                reserva.dataSaida
+        );
+
+        // Pega o valor da diária do quarto
+        BigDecimal diaria = reserva.quarto.diaria;
+
+        // Calcula o valor total
+        BigDecimal valorTotal = diaria.multiply(
+                BigDecimal.valueOf(dias)
+        );
+
+        // Salva o valor total
+        reserva.valorTotal = valorTotal;
+
+        // Finaliza a reserva
+        reserva.status = EnumStatusReserva.FINALIZADA;
+
+        // Deixa o quarto disponível novamente
+        reserva.quarto.status =
+                com.example.innkeeper.entities.EnumStatusQuarto.DISPONIVEL;
+
+        return ResponseEntity.ok(reservaRepository.save(reserva));
     }
 
     // DELETE - Excluir reserva

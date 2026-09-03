@@ -13,12 +13,10 @@ import java.time.LocalDate;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-
 public class Reserva {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-
     public Long id;
 
     public LocalDate dataEntrada;
@@ -27,7 +25,8 @@ public class Reserva {
 
     public BigDecimal valorTotal;
 
-    public String status;
+    @Enumerated(EnumType.STRING)
+    public EnumStatusReserva status;
 
     @ManyToOne
     @JoinColumn(name = "hospede_id")

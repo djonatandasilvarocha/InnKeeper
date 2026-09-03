@@ -1,10 +1,7 @@
 package com.example.innkeeper.entities;
 
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,12 +10,10 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-
 public class Hospede {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-
     public Long id;
 
     public String nome;
@@ -29,4 +24,6 @@ public class Hospede {
 
     public String email;
 
+    @Enumerated(EnumType.STRING)
+    public EnumStatusHospede status;
 }

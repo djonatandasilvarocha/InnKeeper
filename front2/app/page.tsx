@@ -21,7 +21,7 @@ export default function Home() {
             </nav>
 
             <div className="flex items-center gap-4">
-              <a href="#login" className="relative group overflow-hidden rounded-full p-[2px]">
+              <a href="/login" className="relative group overflow-hidden rounded-full p-[2px]">
                 <span className="absolute inset-0 bg-gradient-to-r from-teal-500 to-emerald-500 rounded-full group-hover:opacity-100 opacity-80 transition-opacity"></span>
                 <span className="relative px-6 py-2.5 rounded-full bg-white text-teal-700 font-semibold text-sm flex items-center gap-2 group-hover:bg-opacity-90 transition-all shadow-sm">
                   Entrar no Sistema

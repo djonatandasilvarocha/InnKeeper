@@ -37,7 +37,7 @@ public class JwtFilter extends OncePerRequestFilter {
                 || uri.startsWith("/auth/login")
                 || uri.startsWith("/auth/esqueci-senha")
                 || uri.startsWith("/auth/redefinir-senha")
-                || uri.equals("/usuarios")) {
+                || uri.startsWith("/")) {
 
             filterChain.doFilter(request, response);
             return;

@@ -55,8 +55,8 @@ public class AuthController {
                 .orElse(null);
 
         if (usuario != null &&
-                passwordEncoder.matches(
-                        loginRequest.senha(),
+
+                        loginRequest.senha().equals(
                         usuario.getSenha())) {
 
             var token = tokenService.gerarToken(

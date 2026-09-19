@@ -15,7 +15,7 @@ export default function HospedesPage() {
 
   const carregarDados = async () => {
     try {
-      const resposta = await axios.get<Hospede[]>("http://localhost:8080/hospedes");
+      const resposta = await axios.get<Hospede[]>("http://localhost:8080/hospede");
       setHospedes(resposta.data);
     } catch (error) {
       alert("Erro ao carregar a lista de hóspedes!");

@@ -15,7 +15,7 @@ export default function QuartosPage() {
 
   const carregarDados = async () => {
     try {
-      const resposta = await axios.get<Quarto[]>("http://localhost:8080/quartos");
+      const resposta = await axios.get<Quarto[]>("http://localhost:8080/quarto");
       setQuartos(resposta.data);
     } catch (error) {
       alert("Erro ao carregar a lista de quartos!");

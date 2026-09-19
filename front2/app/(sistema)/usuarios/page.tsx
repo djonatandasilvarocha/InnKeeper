@@ -22,7 +22,7 @@ export default function Usuarios() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-10 space-y-8 font-sans">
+    <div className=" bg-slate-950 text-slate-100 p-6 md:p-10 space-y-8 font-sans">
       {/* Cabeçalho da Página */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
         <div>
@@ -65,6 +65,7 @@ export default function Usuarios() {
                 <th className="py-3.5 px-6 font-semibold">CPF</th>
                 <th className="py-3.5 px-6 font-semibold">E-mail</th>
                 <th className="py-3.5 px-6 font-semibold">Status</th>
+                <th className="py-3.5 px-6 font-semibold">Ações</th>
               </tr>
             </thead>
 
@@ -105,6 +106,9 @@ export default function Usuarios() {
                       />
                       {usuario.status}
                     </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm font-medium text-slate-800">
+                    <Link href={`/usuarios/${usuario.id}/editar`}>Editar</Link>
                   </td>
                 </tr>
               ))}

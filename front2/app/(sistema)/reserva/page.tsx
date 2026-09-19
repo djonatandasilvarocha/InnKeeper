@@ -15,7 +15,7 @@ export default function ReservasPage() {
 
   const carregarDados = async () => {
     try {
-      const resposta = await axios.get<Reserva[]>("http://localhost:8080/reservas");
+      const resposta = await axios.get<Reserva[]>("http://localhost:8080/reserva");
       setReservas(resposta.data);
     } catch (error) {
       alert("Erro ao carregar a lista de reservas!");

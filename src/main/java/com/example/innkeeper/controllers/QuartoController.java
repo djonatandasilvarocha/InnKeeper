@@ -20,50 +20,73 @@ public class QuartoController {
     @Autowired
     private QuartoRepository quartoRepository;
 
+    @GetMapping
     @Operation(
             summary = "Listar quartos",
             description = "Retorna todos os quartos cadastrados no sistema."
     )
-    @GetMapping
     public ResponseEntity<?> listarTodos() {
         return ResponseEntity.ok(quartoRepository.findAll());
     }
 
+    @GetMapping("/{id}")
+    @Operation(
+            summary = "Buscar quarto por id",
+            description = "Retorna um quarto específico através do seu id."
+    )
+    public ResponseEntity<Quarto> buscarPorId(@PathVariable Long id) {
+        Quarto quartoBanco = quartoRepository.findById(id).orElse(null);
+        if (quartoBanco != null) {
+            return ResponseEntity.ok(quartoBanco);
+        }
+        return ResponseEntity.notFound().build();
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @Operation(
+            summary = "Criar quarto",
+            description = "Efetua a criação de um novo quarto."
+    )
     public ResponseEntity<Quarto> criar(@RequestBody Quarto quarto) {
         var quartoBanco = quartoRepository.save(quarto);
         return ResponseEntity.ok(quartoBanco);
     }
 
-    // PUT - Atualizar quarto completo
     @PutMapping("/{id}")
-    public ResponseEntity<Quarto> atualizar(
-            @PathVariable Long id,
-            @RequestBody Quarto quarto) {
+    @Operation(
+            summary = "Atualizar quarto",
+            description = "Atualiza todos os dados de um quarto existente."
+    )
+    public ResponseEntity<Quarto> atualizar(@PathVariable Long id, @RequestBody Quarto quarto) {
 
-        var quartoBanco = quartoRepository.findById(id);
+        try {
+            var quartoBanco = quartoRepository.findById(id);
 
-        if (quartoBanco.isEmpty()) {
-            return ResponseEntity.notFound().build();
+            if (quartoBanco.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            Quarto quartoAtual = quartoBanco.get();
+
+            quartoAtual.numero = quarto.numero;
+            quartoAtual.tipo = quarto.tipo;
+            quartoAtual.capacidade = quarto.capacidade;
+            quartoAtual.diaria = quarto.diaria;
+            quartoAtual.status = quarto.status;
+
+            return ResponseEntity.ok(quartoRepository.save(quartoAtual));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-
-        Quarto quartoAtual = quartoBanco.get();
-
-        quartoAtual.numero = quarto.numero;
-        quartoAtual.tipo = quarto.tipo;
-        quartoAtual.capacidade = quarto.capacidade;
-        quartoAtual.diaria = quarto.diaria;
-        quartoAtual.status = quarto.status;
-
-        return ResponseEntity.ok(quartoRepository.save(quartoAtual));
     }
 
-    // PATCH - Atualizar quarto parcialmente
     @PatchMapping("/{id}")
-    public ResponseEntity<Quarto> atualizarParcial(
-            @PathVariable Long id,
-            @RequestBody Quarto quarto) {
+    @Operation(
+            summary = "Atualizar quarto parcialmente",
+            description = "Atualiza apenas os campos informados de um quarto existente."
+    )
+    public ResponseEntity<Quarto> atualizarParcial(@PathVariable Long id, @RequestBody Quarto quarto) {
 
         var quartoBanco = quartoRepository.findById(id);
 
@@ -96,8 +119,11 @@ public class QuartoController {
         return ResponseEntity.ok(quartoRepository.save(quartoAtual));
     }
 
-    // DELETE - Excluir quarto
     @DeleteMapping("/{id}")
+    @Operation(
+            summary = "Excluir quarto",
+            description = "Efetua a exclusão de um quarto do sistema."
+    )
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
 
         if (!quartoRepository.existsById(id)) {

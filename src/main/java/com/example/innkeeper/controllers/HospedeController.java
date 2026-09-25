@@ -20,49 +20,72 @@ public class HospedeController {
     @Autowired
     private HospedeRepository hospedeRepository;
 
+    @GetMapping
     @Operation(
             summary = "Listar hóspedes",
             description = "Retorna todos os hóspedes cadastrados no sistema."
     )
-    @GetMapping
     public ResponseEntity<?> listarTodos() {
         return ResponseEntity.ok(hospedeRepository.findAll());
     }
 
+    @GetMapping("/{id}")
+    @Operation(
+            summary = "Buscar hóspede por id",
+            description = "Retorna um hóspede específico através do seu id."
+    )
+    public ResponseEntity<Hospede> buscarPorId(@PathVariable Long id) {
+        Hospede hospedeBanco = hospedeRepository.findById(id).orElse(null);
+        if (hospedeBanco != null) {
+            return ResponseEntity.ok(hospedeBanco);
+        }
+        return ResponseEntity.notFound().build();
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @Operation(
+            summary = "Criar hóspede",
+            description = "Efetua a criação de um novo hóspede."
+    )
     public ResponseEntity<Hospede> criar(@RequestBody Hospede hospede) {
         var hospedeBanco = hospedeRepository.save(hospede);
         return ResponseEntity.ok(hospedeBanco);
     }
 
-    // PUT - Atualizar hóspede completo
     @PutMapping("/{id}")
-    public ResponseEntity<Hospede> atualizar(
-            @PathVariable Long id,
-            @RequestBody Hospede hospede) {
+    @Operation(
+            summary = "Atualizar hóspede",
+            description = "Atualiza todos os dados de um hóspede existente."
+    )
+    public ResponseEntity<Hospede> atualizar(@PathVariable Long id, @RequestBody Hospede hospede) {
 
-        var hospedeBanco = hospedeRepository.findById(id);
+        try {
+            var hospedeBanco = hospedeRepository.findById(id);
 
-        if (hospedeBanco.isEmpty()) {
-            return ResponseEntity.notFound().build();
+            if (hospedeBanco.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            Hospede hospedeAtual = hospedeBanco.get();
+
+            hospedeAtual.nome = hospede.nome;
+            hospedeAtual.cpf = hospede.cpf;
+            hospedeAtual.telefone = hospede.telefone;
+            hospedeAtual.email = hospede.email;
+
+            return ResponseEntity.ok(hospedeRepository.save(hospedeAtual));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-
-        Hospede hospedeAtual = hospedeBanco.get();
-
-        hospedeAtual.nome = hospede.nome;
-        hospedeAtual.cpf = hospede.cpf;
-        hospedeAtual.telefone = hospede.telefone;
-        hospedeAtual.email = hospede.email;
-
-        return ResponseEntity.ok(hospedeRepository.save(hospedeAtual));
     }
 
-    // PATCH - Atualizar hóspede parcialmente
     @PatchMapping("/{id}")
-    public ResponseEntity<Hospede> atualizarParcial(
-            @PathVariable Long id,
-            @RequestBody Hospede hospede) {
+    @Operation(
+            summary = "Atualizar hóspede parcialmente",
+            description = "Atualiza apenas os campos informados de um hóspede existente."
+    )
+    public ResponseEntity<Hospede> atualizarParcial(@PathVariable Long id, @RequestBody Hospede hospede) {
 
         var hospedeBanco = hospedeRepository.findById(id);
 
@@ -91,8 +114,11 @@ public class HospedeController {
         return ResponseEntity.ok(hospedeRepository.save(hospedeAtual));
     }
 
-    // DELETE - Excluir hóspede
     @DeleteMapping("/{id}")
+    @Operation(
+            summary = "Excluir hóspede",
+            description = "Efetua a exclusão de um hóspede do sistema."
+    )
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
 
         if (!hospedeRepository.existsById(id)) {

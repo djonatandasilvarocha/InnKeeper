@@ -1,66 +1,65 @@
-'use client'
+"use client";
 
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import axios from "axios";
-import { Usuario, UsuarioFormProps } from "@/app/types/usuario";
+import { Hospede, HospedeFormProps } from "@/app/types/hospede";
 
-export default function UsuarioForm({ usuarioExistente }: UsuarioFormProps) {
+export default function HospedeForm({ hospedeExistente }: HospedeFormProps) {
   const router = useRouter();
 
-  const [usuario, setUsuario] = useState<Usuario>(
-    usuarioExistente || new Usuario(null, "", "", "ATIVO", "", "")
+  const [hospede, setHospede] = useState<Hospede>(
+    hospedeExistente || new Hospede(null, "", "", "", "")
   );
 
   const handlerChange = (
-    campo: "nome" | "email" | "cpf" | "senha",
+    campo: "nome" | "cpf" | "email" | "telefone",
     valor: string
   ) => {
-    setUsuario(
+    setHospede(
       (valorAnterior) =>
-        new Usuario(
+        new Hospede(
           valorAnterior.id,
           campo === "nome" ? valor : valorAnterior.nome,
-          campo === "email" ? valor : valorAnterior.email,
-          valorAnterior.status,
           campo === "cpf" ? valor : valorAnterior.cpf,
-          campo === "senha" ? valor : valorAnterior.senha
+          campo === "email" ? valor : valorAnterior.email,
+          campo === "telefone" ? valor : valorAnterior.telefone
         )
     );
   };
 
   const handlerSalvar = async (formData: FormData) => {
     try {
-      if (usuarioExistente) {
-        var dadosRetorno = await axios.put<number>(
-          `http://localhost:8080/usuarios/${usuario.id}`,
-          usuario
+      if (hospedeExistente) {
+        const dadosRetorno = await axios.put(
+          `http://localhost:8080/hospede/${hospede.id}`,
+          hospede
         );
 
         if (dadosRetorno.status === 200) {
-          alert("Usuário foi salvo com sucesso!");
+          alert("Hóspede atualizado com sucesso!");
         } else {
           alert(dadosRetorno.data);
           return;
         }
       } else {
-        var dadosRetorno = await axios.post<number>(
-          "http://localhost:8080/usuarios",
-          usuario
+        const dadosRetorno = await axios.post(
+          "http://localhost:8080/hospede",
+          hospede
         );
 
         if (dadosRetorno.status === 200) {
-          alert("Usuário foi salvo com sucesso!");
+          alert("Hóspede cadastrado com sucesso!");
         } else {
           alert(dadosRetorno.data);
           return;
         }
       }
 
-      router.push("/usuarios");
+      router.push("/hospede");
     } catch (error) {
-      alert("Erro ao salvar usuário!");
+      alert("Erro ao salvar hóspede!");
     }
   };
 
@@ -72,15 +71,15 @@ export default function UsuarioForm({ usuarioExistente }: UsuarioFormProps) {
       <div className="space-y-6">
         <div>
           <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-            Nome completo:
+            Nome Completo:
           </label>
           <input
             name="nome"
             type="text"
-            value={usuario.nome}
+            value={hospede.nome}
             required
             onChange={(e) => handlerChange("nome", e.target.value)}
-            placeholder="Digite o nome completo"
+            placeholder="Digite o nome do hóspede"
             className="w-full bg-[#030712] border border-slate-800 rounded-lg px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all duration-200"
           />
         </div>
@@ -90,9 +89,9 @@ export default function UsuarioForm({ usuarioExistente }: UsuarioFormProps) {
             CPF:
           </label>
           <input
-            name="CPF"
+            name="cpf"
             type="text"
-            value={usuario.cpf}
+            value={hospede.cpf}
             required
             onChange={(e) => handlerChange("cpf", e.target.value)}
             placeholder="000.000.000-00"
@@ -107,7 +106,7 @@ export default function UsuarioForm({ usuarioExistente }: UsuarioFormProps) {
           <input
             name="email"
             type="email"
-            value={usuario.email}
+            value={hospede.email}
             required
             onChange={(e) => handlerChange("email", e.target.value)}
             placeholder="exemplo@email.com"
@@ -117,22 +116,22 @@ export default function UsuarioForm({ usuarioExistente }: UsuarioFormProps) {
 
         <div>
           <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-            Senha:
+            Telefone:
           </label>
           <input
-            name="Senha"
-            type="password"
-            value={usuario.senha}
+            name="telefone"
+            type="text"
+            value={hospede.telefone}
             required
-            onChange={(e) => handlerChange("senha", e.target.value)}
-            placeholder="••••••••"
+            onChange={(e) => handlerChange("telefone", e.target.value)}
+            placeholder="(00) 00000-0000"
             className="w-full bg-[#030712] border border-slate-800 rounded-lg px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all duration-200"
           />
         </div>
 
         <div className="flex items-center justify-end gap-4 pt-4 border-t border-slate-800/80">
           <Link
-            href="/usuarios"
+            href="/hospede"
             className="px-5 py-2.5 text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 rounded-lg transition-all duration-200"
           >
             Cancelar

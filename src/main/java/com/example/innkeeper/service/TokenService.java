@@ -17,20 +17,17 @@ public class TokenService {
 
     @Value("${spring.secret}")
     private String secret;
-
     @Value("${spring.expiracao}")
     private Long expiracao;
-
     @Value("${spring.emissor}")
     private String emissor;
 
     public String gerarToken(String subject){
 
-        try {
-
+        try{
             Algorithm algorithm = Algorithm.HMAC256(secret);
 
-            String token = com.auth0.jwt.JWT.create()
+            String token = JWT.create()
                     .withIssuer(emissor)
                     .withSubject(subject)
                     .withExpiresAt(getDataExpiracao())
@@ -41,8 +38,8 @@ public class TokenService {
         } catch (RuntimeException e) {
             throw new RuntimeException(e);
         }
-
     }
+
     public DecodedJWT verificarToken(String token)throws JWTVerificationException {
 
         Algorithm algorithm = Algorithm.HMAC256(secret);

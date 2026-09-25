@@ -24,53 +24,74 @@ public class ReservaController {
     @Autowired
     private ReservaRepository reservaRepository;
 
+    @GetMapping
     @Operation(
             summary = "Listar reservas",
             description = "Retorna todas as reservas cadastradas no sistema."
     )
-    @GetMapping
     public ResponseEntity<?> listarTodos() {
         return ResponseEntity.ok(reservaRepository.findAll());
     }
 
+    @GetMapping("/{id}")
+    @Operation(
+            summary = "Buscar reserva por id",
+            description = "Retorna uma reserva específica através do seu id."
+    )
+    public ResponseEntity<Reserva> buscarPorId(@PathVariable Long id) {
+        Reserva reservaBanco = reservaRepository.findById(id).orElse(null);
+        if (reservaBanco != null) {
+            return ResponseEntity.ok(reservaBanco);
+        }
+        return ResponseEntity.notFound().build();
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @Operation(
+            summary = "Criar reserva",
+            description = "Efetua a criação de uma nova reserva."
+    )
     public ResponseEntity<Reserva> criar(@RequestBody Reserva reserva) {
-
         var reservaBanco = reservaRepository.save(reserva);
-
         return ResponseEntity.ok(reservaBanco);
     }
 
-    // PUT - Atualizar reserva completa
     @PutMapping("/{id}")
-    public ResponseEntity<Reserva> atualizar(
-            @PathVariable Long id,
-            @RequestBody Reserva reserva) {
+    @Operation(
+            summary = "Atualizar reserva",
+            description = "Atualiza todos os dados de uma reserva existente."
+    )
+    public ResponseEntity<Reserva> atualizar(@PathVariable Long id, @RequestBody Reserva reserva) {
 
-        var reservaBanco = reservaRepository.findById(id);
+        try {
+            var reservaBanco = reservaRepository.findById(id);
 
-        if (reservaBanco.isEmpty()) {
-            return ResponseEntity.notFound().build();
+            if (reservaBanco.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            Reserva reservaAtual = reservaBanco.get();
+
+            reservaAtual.dataEntrada = reserva.dataEntrada;
+            reservaAtual.dataSaida = reserva.dataSaida;
+            reservaAtual.valorTotal = reserva.valorTotal;
+            reservaAtual.status = reserva.status;
+            reservaAtual.hospede = reserva.hospede;
+            reservaAtual.quarto = reserva.quarto;
+
+            return ResponseEntity.ok(reservaRepository.save(reservaAtual));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-
-        Reserva reservaAtual = reservaBanco.get();
-
-        reservaAtual.dataEntrada = reserva.dataEntrada;
-        reservaAtual.dataSaida = reserva.dataSaida;
-        reservaAtual.valorTotal = reserva.valorTotal;
-        reservaAtual.status = reserva.status;
-        reservaAtual.hospede = reserva.hospede;
-        reservaAtual.quarto = reserva.quarto;
-
-        return ResponseEntity.ok(reservaRepository.save(reservaAtual));
     }
 
-    // PATCH - Atualizar reserva parcialmente
     @PatchMapping("/{id}")
-    public ResponseEntity<Reserva> atualizarParcial(
-            @PathVariable Long id,
-            @RequestBody Reserva reserva) {
+    @Operation(
+            summary = "Atualizar reserva parcialmente",
+            description = "Atualiza apenas os campos informados de uma reserva existente."
+    )
+    public ResponseEntity<Reserva> atualizarParcial(@PathVariable Long id, @RequestBody Reserva reserva) {
 
         var reservaBanco = reservaRepository.findById(id);
 
@@ -103,8 +124,11 @@ public class ReservaController {
         return ResponseEntity.ok(reservaRepository.save(reservaAtual));
     }
 
-    // PATCH - Realizar check-out
     @PatchMapping("/{id}/checkout")
+    @Operation(
+            summary = "Realizar checkout",
+            description = "Finaliza a reserva, calcula o valor total da estadia e libera o quarto."
+    )
     public ResponseEntity<Reserva> checkout(@PathVariable Long id) {
 
         var reservaBanco = reservaRepository.findById(id);
@@ -115,45 +139,32 @@ public class ReservaController {
 
         Reserva reserva = reservaBanco.get();
 
-        // Verifica se a reserva já foi finalizada
         if (reserva.status == EnumStatusReserva.FINALIZADA) {
             return ResponseEntity.badRequest().build();
         }
 
-        // Verifica se a reserva foi cancelada
         if (reserva.status == EnumStatusReserva.CANCELADA) {
             return ResponseEntity.badRequest().build();
         }
 
-        // Calcula a quantidade de dias da estadia
-        long dias = ChronoUnit.DAYS.between(
-                reserva.dataEntrada,
-                reserva.dataSaida
-        );
+        long dias = ChronoUnit.DAYS.between(reserva.dataEntrada, reserva.dataSaida);
 
-        // Pega o valor da diária do quarto
         BigDecimal diaria = reserva.quarto.diaria;
 
-        // Calcula o valor total
-        BigDecimal valorTotal = diaria.multiply(
-                BigDecimal.valueOf(dias)
-        );
+        BigDecimal valorTotal = diaria.multiply(BigDecimal.valueOf(dias));
 
-        // Salva o valor total
         reserva.valorTotal = valorTotal;
-
-        // Finaliza a reserva
         reserva.status = EnumStatusReserva.FINALIZADA;
-
-        // Deixa o quarto disponível novamente
-        reserva.quarto.status =
-                com.example.innkeeper.entities.EnumStatusQuarto.DISPONIVEL;
+        reserva.quarto.status = com.example.innkeeper.entities.EnumStatusQuarto.DISPONIVEL;
 
         return ResponseEntity.ok(reservaRepository.save(reserva));
     }
 
-    // DELETE - Excluir reserva
     @DeleteMapping("/{id}")
+    @Operation(
+            summary = "Excluir reserva",
+            description = "Efetua a exclusão de uma reserva do sistema."
+    )
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
 
         if (!reservaRepository.existsById(id)) {

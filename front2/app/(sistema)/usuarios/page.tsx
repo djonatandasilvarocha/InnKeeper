@@ -1,9 +1,9 @@
 "use client";
 
-import { Usuario } from "@/app/types/usuario";
-import axios from "axios";
-import Link from "next/link";
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import axios from "axios";
+import { Usuario } from "@/app/types/usuario";
 
 export default function Usuarios() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
@@ -21,8 +21,52 @@ export default function Usuarios() {
     }
   };
 
+  const handleDeletarUsuario = async (usuario: Usuario) => {
+    try {
+      var dadosRetorno = await axios.delete(
+        `http://localhost:8080/usuarios/${usuario.id}/excluir`
+      );
+
+      if (dadosRetorno.status === 200) {
+        alert("Excluído com sucesso!");
+      } else {
+        alert(dadosRetorno.data);
+        return;
+      }
+
+      carregarDados();
+    } catch (error) {
+      alert("Erro ao excluir usuário!");
+    }
+  };
+
+  const handleAlterarStatusUsuario = async (usuario: Usuario) => {
+    try {
+      var novoStatus =
+        usuario.status === "ATIVO"
+          ? { status: "BLOQUEADO" }
+          : { status: "ATIVO" };
+
+      var dadosRetorno = await axios.patch(
+        `http://localhost:8080/usuarios/${usuario.id}/status`,
+        novoStatus
+      );
+
+      if (dadosRetorno.status === 200) {
+        alert("Atualizado status com sucesso!");
+      } else {
+        alert(dadosRetorno.data);
+        return;
+      }
+
+      carregarDados();
+    } catch (error) {
+      alert("Erro ao alterar status!");
+    }
+  };
+
   return (
-    <div className=" bg-slate-950 text-slate-100 p-6 md:p-10 space-y-8 font-sans">
+    <div className="bg-slate-950 text-slate-100 p-6 md:p-10 space-y-8 font-sans">
       {/* Cabeçalho da Página */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
         <div>
@@ -36,7 +80,7 @@ export default function Usuarios() {
 
         <Link
           href="/usuarios/novo"
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-linear-to-r from-teal-500 to-emerald-500 text-slate-950 font-semibold hover:from-teal-400 hover:to-emerald-400 transition-all duration-200 shadow-lg shadow-teal-500/10 active:scale-95 text-sm"
+          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 text-slate-950 font-semibold hover:from-teal-400 hover:to-emerald-400 transition-all duration-200 shadow-lg shadow-teal-500/10 active:scale-95 text-sm"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
@@ -47,7 +91,6 @@ export default function Usuarios() {
 
       {/* Container da Tabela */}
       <div className="bg-slate-900/80 border border-slate-800/80 rounded-2xl shadow-xl overflow-hidden backdrop-blur-md">
-        
         {/* Contador no topo */}
         <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/40">
           <span className="text-xs text-slate-400">
@@ -65,7 +108,7 @@ export default function Usuarios() {
                 <th className="py-3.5 px-6 font-semibold">CPF</th>
                 <th className="py-3.5 px-6 font-semibold">E-mail</th>
                 <th className="py-3.5 px-6 font-semibold">Status</th>
-                <th className="py-3.5 px-6 font-semibold">Ações</th>
+                <th className="py-3.5 px-6 font-semibold text-right">Ações</th>
               </tr>
             </thead>
 
@@ -94,28 +137,57 @@ export default function Usuarios() {
                   <td className="py-4 px-6">
                     <span
                       className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
-                        usuario.status?.toLowerCase() === "ativo"
+                        usuario.status === "ATIVO"
                           ? "bg-emerald-950/60 text-emerald-400 border border-emerald-500/30"
-                          : "bg-slate-800 text-slate-400 border border-slate-700"
+                          : "bg-amber-950/60 text-amber-400 border border-amber-500/30"
                       }`}
                     >
                       <span
                         className={`w-1.5 h-1.5 rounded-full ${
-                          usuario.status?.toLowerCase() === "ativo" ? "bg-emerald-400" : "bg-slate-500"
+                          usuario.status === "ATIVO" ? "bg-emerald-400" : "bg-amber-400"
                         }`}
                       />
                       {usuario.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-sm font-medium text-slate-800">
-                    <Link href={`/usuarios/${usuario.id}/editar`}>Editar</Link>
+
+                  <td className="py-4 px-6 text-right">
+                    <div className="inline-flex items-center gap-3">
+                      {/* Botão de Editar */}
+                      <Link
+                        href={`/usuarios/${usuario.id}/editar`}
+                        className="text-xs font-medium text-slate-300 hover:text-teal-400 transition-colors"
+                      >
+                        Editar
+                      </Link>
+
+                      {/* Botão de Alternar Status */}
+                      <button
+                        onClick={() => handleAlterarStatusUsuario(usuario)}
+                        className={`text-xs font-medium transition-colors ${
+                          usuario.status === "BLOQUEADO"
+                            ? "text-emerald-400 hover:text-emerald-300"
+                            : "text-amber-400 hover:text-amber-300"
+                        }`}
+                      >
+                        {usuario.status === "BLOQUEADO" ? "Ativar" : "Bloquear"}
+                      </button>
+
+                      {/* Botão de Deletar */}
+                      <button
+                        onClick={() => handleDeletarUsuario(usuario)}
+                        className="text-xs font-medium text-rose-500 hover:text-rose-400 transition-colors"
+                      >
+                        Deletar
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
 
               {usuarios.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-slate-500 italic">
+                  <td colSpan={6} className="py-12 text-center text-slate-500 italic">
                     Nenhum usuário encontrado!
                   </td>
                 </tr>

@@ -10,7 +10,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/quartos")
+@RequestMapping("/quarto")
+@CrossOrigin(origins = "*")
 @Tag(
         name = "Quartos",
         description = "Operações relacionadas ao gerenciamento dos quartos da pousada."

@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import { useState } from "react";
 import Link from "next/link";
@@ -30,7 +30,8 @@ export default function UsuarioForm({ usuarioExistente }: UsuarioFormProps) {
     );
   };
 
-  const handlerSalvar = async (formData: FormData) => {
+  const handlerSalvar = async (e: React.FormEvent) => {
+    e.preventDefault();
     try {
       if (usuarioExistente) {
         var dadosRetorno = await axios.put<number>(
@@ -50,7 +51,7 @@ export default function UsuarioForm({ usuarioExistente }: UsuarioFormProps) {
           usuario
         );
 
-        if (dadosRetorno.status === 200) {
+        if (dadosRetorno.status === 200 || dadosRetorno.status === 201) {
           alert("Usuário foi salvo com sucesso!");
         } else {
           alert(dadosRetorno.data);
@@ -66,7 +67,7 @@ export default function UsuarioForm({ usuarioExistente }: UsuarioFormProps) {
 
   return (
     <form
-      action={handlerSalvar}
+      onSubmit={handlerSalvar}
       className="w-full max-w-2xl mx-auto bg-[#0b1120] border border-slate-800 rounded-xl p-8 shadow-2xl"
     >
       <div className="space-y-6">
@@ -77,7 +78,7 @@ export default function UsuarioForm({ usuarioExistente }: UsuarioFormProps) {
           <input
             name="nome"
             type="text"
-            value={usuario.nome}
+            value={usuario.nome || ""}
             required
             onChange={(e) => handlerChange("nome", e.target.value)}
             placeholder="Digite o nome completo"
@@ -92,7 +93,7 @@ export default function UsuarioForm({ usuarioExistente }: UsuarioFormProps) {
           <input
             name="CPF"
             type="text"
-            value={usuario.cpf}
+            value={usuario.cpf || ""}
             required
             onChange={(e) => handlerChange("cpf", e.target.value)}
             placeholder="000.000.000-00"
@@ -107,7 +108,7 @@ export default function UsuarioForm({ usuarioExistente }: UsuarioFormProps) {
           <input
             name="email"
             type="email"
-            value={usuario.email}
+            value={usuario.email || ""}
             required
             onChange={(e) => handlerChange("email", e.target.value)}
             placeholder="exemplo@email.com"
@@ -122,7 +123,7 @@ export default function UsuarioForm({ usuarioExistente }: UsuarioFormProps) {
           <input
             name="Senha"
             type="password"
-            value={usuario.senha}
+            value={usuario.senha || ""}
             required
             onChange={(e) => handlerChange("senha", e.target.value)}
             placeholder="••••••••"

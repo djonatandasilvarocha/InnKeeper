@@ -1,11 +1,11 @@
 package com.example.innkeeper.controllers;
 
+import com.example.innkeeper.entities.EnumStatusQuarto;
 import com.example.innkeeper.entities.EnumStatusReserva;
 import com.example.innkeeper.entities.Reserva;
 import com.example.innkeeper.repository.ReservaRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,15 +14,20 @@ import java.math.BigDecimal;
 import java.time.temporal.ChronoUnit;
 
 @RestController
-@RequestMapping("/reservas")
+@RequestMapping("/reserva")
+@CrossOrigin(origins = "*")
 @Tag(
         name = "Reservas",
         description = "Operações relacionadas ao gerenciamento das reservas."
 )
 public class ReservaController {
 
-    @Autowired
-    private ReservaRepository reservaRepository;
+    private final ReservaRepository reservaRepository;
+
+    // Injeção via construtor (remove a mensagem "Field injection is not recommended")
+    public ReservaController(ReservaRepository reservaRepository) {
+        this.reservaRepository = reservaRepository;
+    }
 
     @GetMapping
     @Operation(
@@ -63,7 +68,6 @@ public class ReservaController {
             description = "Atualiza todos os dados de uma reserva existente."
     )
     public ResponseEntity<Reserva> atualizar(@PathVariable Long id, @RequestBody Reserva reserva) {
-
         try {
             var reservaBanco = reservaRepository.findById(id);
 
@@ -139,23 +143,17 @@ public class ReservaController {
 
         Reserva reserva = reservaBanco.get();
 
-        if (reserva.status == EnumStatusReserva.FINALIZADA) {
-            return ResponseEntity.badRequest().build();
-        }
-
-        if (reserva.status == EnumStatusReserva.CANCELADA) {
+        if (reserva.status == EnumStatusReserva.FINALIZADA || reserva.status == EnumStatusReserva.CANCELADA) {
             return ResponseEntity.badRequest().build();
         }
 
         long dias = ChronoUnit.DAYS.between(reserva.dataEntrada, reserva.dataSaida);
-
         BigDecimal diaria = reserva.quarto.diaria;
 
-        BigDecimal valorTotal = diaria.multiply(BigDecimal.valueOf(dias));
-
-        reserva.valorTotal = valorTotal;
+        // Atribuição direta (remove o aviso "Local variable 'valorTotal' is redundant")
+        reserva.valorTotal = diaria.multiply(BigDecimal.valueOf(dias));
         reserva.status = EnumStatusReserva.FINALIZADA;
-        reserva.quarto.status = com.example.innkeeper.entities.EnumStatusQuarto.DISPONIVEL;
+        reserva.quarto.status = EnumStatusQuarto.DISPONIVEL;
 
         return ResponseEntity.ok(reservaRepository.save(reserva));
     }

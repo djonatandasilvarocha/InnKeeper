@@ -1,13 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import axios from "axios";
 import Link from "next/link";
+import axios from "axios";
 import { Reserva } from "@/app/types/reserva";
 
-export default function ReservasPage() {
+export default function Reservas() {
   const [reservas, setReservas] = useState<Reserva[]>([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     carregarDados();
@@ -15,51 +14,66 @@ export default function ReservasPage() {
 
   const carregarDados = async () => {
     try {
-      const resposta = await axios.get<Reserva[]>("http://localhost:8080/reservas");
-      setReservas(resposta.data);
+      const dados = await axios.get<Reserva[]>("http://localhost:8080/reserva");
+      setReservas(dados.data);
     } catch (error) {
-      alert("Erro ao carregar a lista de reservas!");
-    } finally {
-      setLoading(false);
+      alert("Erro ao carregar lista de reservas!");
     }
   };
 
-  // Função para aplicar estilos visuais baseados no status da reserva
-  const getStatusBadge = (status?: string) => {
-    const statusLower = status?.toLowerCase();
-    switch (statusLower) {
-      case "confirmado":
-      case "confirmada":
-        return "bg-teal-500/10 text-teal-400 border-teal-500/20";
-      case "pendente":
-        return "bg-amber-500/10 text-amber-400 border-amber-500/20";
-      case "cancelado":
-      case "cancelada":
-        return "bg-rose-500/10 text-rose-400 border-rose-500/20";
-      case "finalizado":
-      case "finalizada":
-      case "check-out":
-        return "bg-slate-800 text-slate-400 border-slate-700";
-      default:
-        return "bg-slate-800 text-slate-400 border-slate-700";
+  const handleCheckout = async (reserva: Reserva) => {
+    if (!confirm(`Deseja realizar o checkout da reserva #${reserva.id}?`)) return;
+
+    try {
+      const dadosRetorno = await axios.patch(
+        `http://localhost:8080/reserva/${reserva.id}/checkout`
+      );
+
+      if (dadosRetorno.status === 200) {
+        alert("Checkout realizado com sucesso!");
+        carregarDados();
+      } else {
+        alert("Não foi possível realizar o checkout.");
+      }
+    } catch (error) {
+      alert("Erro ao realizar checkout!");
+    }
+  };
+
+  const handleDeletarReserva = async (reserva: Reserva) => {
+    if (!confirm(`Deseja realmente excluir a reserva #${reserva.id}?`)) return;
+
+    try {
+      const dadosRetorno = await axios.delete(
+        `http://localhost:8080/reserva/${reserva.id}`
+      );
+
+      if (dadosRetorno.status === 200 || dadosRetorno.status === 204) {
+        alert("Reserva excluída com sucesso!");
+        carregarDados();
+      } else {
+        alert(dadosRetorno.data);
+      }
+    } catch (error) {
+      alert("Erro ao excluir reserva!");
     }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="bg-slate-950 text-slate-100 p-6 md:p-10 space-y-8 font-sans min-h-screen">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
         <div>
-          <h2 className="text-2xl md:text-3xl font-bold text-slate-50 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-50">
             Gestão de <span className="text-teal-400">Reservas</span>
-          </h2>
+          </h1>
           <p className="text-slate-400 text-sm mt-1">
-            Acompanhe check-ins, check-outs e estadias ativas.
+            Acompanhe o check-in, check-out e status das acomodações.
           </p>
         </div>
 
         <Link
           href="/reserva/novo"
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-linear-to-r from-teal-500 to-emerald-500 text-slate-950 font-semibold hover:from-teal-400 hover:to-emerald-400 transition-all duration-200 shadow-lg shadow-teal-500/10 active:scale-95 text-sm"
+          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 text-slate-950 font-semibold hover:from-teal-400 hover:to-emerald-400 transition-all duration-200 shadow-lg shadow-teal-500/10 active:scale-95 text-sm"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
@@ -68,68 +82,95 @@ export default function ReservasPage() {
         </Link>
       </div>
 
-      {/* Tabela de Reservas */}
-      <div className="bg-slate-900/50 border border-slate-800/80 rounded-2xl p-6 backdrop-blur-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-300">
-            <thead className="text-xs uppercase bg-slate-950/60 text-slate-400 border-b border-slate-800">
-              <tr>
-                <th className="px-4 py-3">Código</th>
-                <th className="px-4 py-3">Hóspede</th>
-                <th className="px-4 py-3">Quarto</th>
-                <th className="px-4 py-3">Check-in</th>
-                <th className="px-4 py-3">Check-out</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3 text-right">Ações</th>
+      <div className="bg-slate-900/80 border border-slate-800/80 rounded-2xl shadow-xl overflow-hidden backdrop-blur-md">
+        <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/40">
+          <span className="text-xs text-slate-400">
+            Total: <strong className="text-slate-200">{reservas.length}</strong> reservas ativas
+          </span>
+        </div>
+
+        <div className="overflow-x-auto w-full">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-950/60 border-b border-slate-800 text-xs uppercase tracking-wider text-slate-400">
+                <th className="py-3.5 px-6 font-semibold">Código</th>
+                <th className="py-3.5 px-6 font-semibold">Hóspede</th>
+                <th className="py-3.5 px-6 font-semibold">Quarto</th>
+                <th className="py-3.5 px-6 font-semibold">Entrada</th>
+                <th className="py-3.5 px-6 font-semibold">Saída</th>
+                <th className="py-3.5 px-6 font-semibold">Valor Total</th>
+                <th className="py-3.5 px-6 font-semibold">Status</th>
+                <th className="py-3.5 px-6 font-semibold text-right">Ações</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60">
-              {reservas.map((reserva) => (
-                <tr key={reserva.id} className="hover:bg-slate-800/30 transition-colors">
-                  <td className="px-4 py-3.5 font-mono text-xs text-teal-400">
-                    #{reserva.id}
+
+            <tbody className="divide-y divide-slate-800/60 text-sm">
+              {reservas.map((r) => (
+                <tr key={r.id} className="hover:bg-slate-800/40 transition-colors">
+                  <td className="py-4 px-6 font-mono text-xs text-teal-400">
+                    #{r.id}
                   </td>
-                  <td className="px-4 py-3.5 font-medium text-slate-100">
-                    {reserva.hospedeNome}
+                  <td className="py-4 px-6 font-medium text-slate-200">
+                    {r.hospede?.nome || "Não informado"}
                   </td>
-                  <td className="px-4 py-3.5 text-slate-300">
-                    {reserva.quartoNumero}
+                  <td className="py-4 px-6 text-slate-300">
+                    Quarto Nº {r.quarto?.numero || "N/A"}
                   </td>
-                  <td className="px-4 py-3.5 text-slate-400 font-mono text-xs">
-                    {reserva.dataCheckIn}
+                  <td className="py-4 px-6 font-mono text-xs text-slate-400">
+                    {r.dataEntrada}
                   </td>
-                  <td className="px-4 py-3.5 text-slate-400 font-mono text-xs">
-                    {reserva.dataCheckOut}
+                  <td className="py-4 px-6 font-mono text-xs text-slate-400">
+                    {r.dataSaida}
                   </td>
-                  <td className="px-4 py-3.5">
+                  <td className="py-4 px-6 font-mono text-xs text-emerald-400">
+                    {r.valorTotal != null ? `R$ ${Number(r.valorTotal).toFixed(2)}` : "-"}
+                  </td>
+                  <td className="py-4 px-6">
                     <span
-                      className={`text-xs font-semibold px-2.5 py-1 rounded-md border ${getStatusBadge(
-                        reserva.status
-                      )}`}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+                        r.status === "CONFIRMADA"
+                          ? "bg-emerald-950/60 text-emerald-400 border border-emerald-500/30"
+                          : r.status === "PENDENTE"
+                          ? "bg-amber-950/60 text-amber-400 border border-amber-500/30"
+                          : r.status === "FINALIZADA"
+                          ? "bg-sky-950/60 text-sky-400 border border-sky-500/30"
+                          : "bg-rose-950/60 text-rose-400 border border-rose-500/30"
+                      }`}
                     >
-                      {reserva.status || "Pendente"}
+                      {r.status}
                     </span>
                   </td>
-                  <td className="px-4 py-3.5 text-right">
-                    <button className="text-teal-400 hover:text-teal-300 text-xs font-semibold mr-3">
-                      Ver Detalhes
-                    </button>
+                  <td className="py-4 px-6 text-right">
+                    <div className="inline-flex items-center gap-3">
+                      {r.status !== "FINALIZADA" && r.status !== "CANCELADA" && (
+                        <button
+                          onClick={() => handleCheckout(r)}
+                          className="text-xs font-medium text-emerald-400 hover:text-emerald-300 transition-colors"
+                        >
+                          Checkout
+                        </button>
+                      )}
+                      <Link
+                        href={`/reserva/${r.id}/editar`}
+                        className="text-xs font-medium text-slate-300 hover:text-teal-400 transition-colors"
+                      >
+                        Editar
+                      </Link>
+                      <button
+                        onClick={() => handleDeletarReserva(r)}
+                        className="text-xs font-medium text-rose-500 hover:text-rose-400 transition-colors"
+                      >
+                        Deletar
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
 
-              {reservas.length === 0 && !loading && (
+              {reservas.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-slate-500 italic">
+                  <td colSpan={8} className="py-12 text-center text-slate-500 italic">
                     Nenhuma reserva encontrada!
-                  </td>
-                </tr>
-              )}
-
-              {loading && (
-                <tr>
-                  <td colSpan={7} className="py-8 text-center text-slate-400">
-                    Carregando reservas...
                   </td>
                 </tr>
               )}

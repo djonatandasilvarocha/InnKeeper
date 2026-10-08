@@ -1,6 +1,6 @@
-package com.example.innkeeper.DTOs;
+package com.example.innkeeper.application.DTOs;
 
-import com.example.innkeeper.entities.EnumStatusQuarto;
+import com.example.innkeeper.domain.entities.EnumStatusQuarto;
 
 import java.math.BigDecimal;
 

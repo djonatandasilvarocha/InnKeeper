@@ -1,30 +1,29 @@
-package com.example.innkeeper.entities;
+package com.example.innkeeper.domain.entities;
+
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
-
 @Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Quarto {
+public class Hospede {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public Long id;
 
-    public String numero;
+    public String nome;
 
-    public String tipo;
+    public String cpf;
 
-    public Integer capacidade;
+    public String telefone;
 
-    public BigDecimal diaria;
+    public String email;
 
     @Enumerated(EnumType.STRING)
-    public EnumStatusQuarto status;
+    public EnumStatusHospede status;
 }

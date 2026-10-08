@@ -1,4 +1,4 @@
-package com.example.innkeeper.DTOs;
+package com.example.innkeeper.application.DTOs;
 
 public record LoginRequest(String email, String senha) {
 

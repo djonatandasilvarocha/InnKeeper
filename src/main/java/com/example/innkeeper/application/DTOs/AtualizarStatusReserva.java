@@ -1,6 +1,6 @@
-package com.example.innkeeper.DTOs;
+package com.example.innkeeper.application.DTOs;
 
-import com.example.innkeeper.entities.EnumStatusReserva;
+import com.example.innkeeper.domain.entities.EnumStatusReserva;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

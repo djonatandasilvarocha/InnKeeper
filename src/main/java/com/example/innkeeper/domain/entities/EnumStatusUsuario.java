@@ -1,4 +1,4 @@
-package com.example.innkeeper.entities;
+package com.example.innkeeper.domain.entities;
 
 public enum EnumStatusUsuario {
     ATIVO,

@@ -1,7 +1,6 @@
-package com.example.innkeeper.repository;
+package com.example.innkeeper.domain.repository;
 
-import com.example.innkeeper.entities.Hospede;
-import com.example.innkeeper.entities.Reserva;
+import com.example.innkeeper.domain.entities.Reserva;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

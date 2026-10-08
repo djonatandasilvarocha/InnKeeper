@@ -1,4 +1,4 @@
-package com.example.innkeeper.entities;
+package com.example.innkeeper.domain.entities;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

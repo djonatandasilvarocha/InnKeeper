@@ -1,7 +1,7 @@
-package com.example.innkeeper.controllers;
+package com.example.innkeeper.presentation.controllers;
 
-import com.example.innkeeper.entities.Quarto;
-import com.example.innkeeper.repository.QuartoRepository;
+import com.example.innkeeper.domain.entities.Quarto;
+import com.example.innkeeper.domain.repository.QuartoRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;

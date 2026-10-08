@@ -1,9 +1,9 @@
-package com.example.innkeeper.controllers;
+package com.example.innkeeper.presentation.controllers;
 
-import com.example.innkeeper.DTOs.LoginRequest;
-import com.example.innkeeper.DTOs.LoginResponse;
-import com.example.innkeeper.repository.UsuarioRepository;
-import com.example.innkeeper.service.TokenService;
+import com.example.innkeeper.application.DTOs.LoginRequest;
+import com.example.innkeeper.application.DTOs.LoginResponse;
+import com.example.innkeeper.domain.repository.UsuarioRepository;
+import com.example.innkeeper.application.service.TokenService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;

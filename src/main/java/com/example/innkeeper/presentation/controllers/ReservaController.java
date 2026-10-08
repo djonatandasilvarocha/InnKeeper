@@ -1,9 +1,9 @@
-package com.example.innkeeper.controllers;
+package com.example.innkeeper.presentation.controllers;
 
-import com.example.innkeeper.entities.EnumStatusQuarto;
-import com.example.innkeeper.entities.EnumStatusReserva;
-import com.example.innkeeper.entities.Reserva;
-import com.example.innkeeper.repository.ReservaRepository;
+import com.example.innkeeper.domain.entities.EnumStatusQuarto;
+import com.example.innkeeper.domain.entities.EnumStatusReserva;
+import com.example.innkeeper.domain.entities.Reserva;
+import com.example.innkeeper.domain.repository.ReservaRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;

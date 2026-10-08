@@ -1,4 +1,4 @@
-package com.example.innkeeper.service;
+package com.example.innkeeper.application.service;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;

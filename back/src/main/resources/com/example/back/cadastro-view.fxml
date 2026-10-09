@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.back.CadastroController">
+    <children>
+        <Label layoutX="162.0" layoutY="118.0" text="Nome" />
+        <Label layoutX="168.0" layoutY="161.0" text="CPF" />
+        <Label layoutX="164.0" layoutY="201.0" text="Email" />
+        <Label layoutX="162.0" layoutY="239.0" text="Senha" />
+
+        <TextField fx:id="txtNome" layoutX="199.0" layoutY="114.0" />
+        <TextField fx:id="txtCpf" layoutX="199.0" layoutY="157.0" />
+        <TextField fx:id="txtEmail" layoutX="199.0" layoutY="197.0" />
+        <PasswordField fx:id="txtSenha" layoutX="199.0" layoutY="235.0" />
+
+        <Button fx:id="btnSalvar" layoutX="199.0" layoutY="299.0" mnemonicParsing="false" onAction="#salvar" text="Salvar" />
+        <Button fx:id="btnVoltar" layoutX="299.0" layoutY="299.0" mnemonicParsing="false" onAction="#voltar" text="Voltar" />
+    </children>
+</AnchorPane>

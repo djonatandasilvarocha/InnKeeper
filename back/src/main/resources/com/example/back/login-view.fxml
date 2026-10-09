@@ -3,7 +3,8 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane prefHeight="370.0" prefWidth="428.0" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.back.LoginController">
+<AnchorPane prefHeight="370.0" prefWidth="428.0" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.example.back.LoginController">
     <children>
         <Button layoutX="159.0" layoutY="202.0" onAction="#onLoginButtonClick" prefHeight="33.0" prefWidth="67.0" text="Login" />
       <Label layoutX="83.0" layoutY="140.0" text="Key:" />

@@ -3,13 +3,20 @@ package com.example.back;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
+import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
+import javafx.scene.control.Alert;
+import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 public class CadastroController {
 
@@ -23,37 +30,98 @@ public class CadastroController {
     private TextField txtEmail;
 
     @FXML
-    private TextField txtSenha;
+    private PasswordField txtSenha;
 
     @FXML
-    private Button btnSalvar;
+    public void salvarUsuario(ActionEvent event) throws Exception {
 
-    @FXML
-    private Button btnVoltar;
 
-    @FXML
-    public void salvar(ActionEvent event) {
-        String nome = txtNome.getText();
-        String cpf = txtCpf.getText();
-        String email = txtEmail.getText();
-        String senha = txtSenha.getText();
+        //Validar Dados
 
-        // Comando para enviar o salvando do usuário para o service
-        System.out.println("Salvando usuário: " + nome + " - " + email);
-    }
+        String jsonRequest = String.format("{\n" +
+                        "  \"nome\": \"%s\",\n" +
+                        "  \"email\": \"%s\",\n" +
+                        "  \"senha\": \"%s\",\n" +
+                        "  \"cpf\": \"%s\",\n" +
+                        "  \"secretKey\": \"%s\"\n" +
+                        "}", txtNome.getText(),
+                txtEmail.getText(),
+                txtSenha.getText(),
+                txtCpf.getText(),
+                "sakjbhaskjcdhaiubshLKVAShfbdw68asd65d");
 
-    @FXML
-    public void voltar(ActionEvent event) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("menu-view.fxml"));
-            Parent root = loader.load();
+        int respostaApi = executaMetodoAPI("http://localhost:8080/usuarios/admin",jsonRequest,"POST");
 
-            Stage stage = (Stage) btnVoltar.getScene().getWindow();
-            stage.setScene(new Scene(root));
-            stage.setTitle("Menu Principal");
-            stage.show();
-        } catch (IOException e) {
-            e.printStackTrace();
+
+        if(respostaApi ==200){
+            showMessage(Alert.AlertType.INFORMATION,"Usuario salvo com sucesso!");
+            voltar(event);
+
+        }else {
+            showMessage(Alert.AlertType.ERROR,"Erro ao salvar usuário!");
         }
+
+
+
+
+
     }
+
+
+    @FXML
+    public void voltar(ActionEvent event) throws IOException {
+        FXMLLoader loader =
+                new FXMLLoader(getClass().getResource("/com/example/back/menu-view.fxml"));
+
+        Scene scene = new Scene(loader.load());
+        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        stage.setScene(scene);
+
+    }
+
+    private int executaMetodoAPI(String url,String json,String protocoloHttp)
+            throws Exception {
+
+
+        URL urlAPI = new URL(url);
+        HttpURLConnection connection = (HttpURLConnection) urlAPI.openConnection();
+        connection.setRequestMethod(protocoloHttp);
+        connection.setDoOutput(true);
+
+
+        if(!json.isEmpty()){
+            connection.setRequestProperty("Content-Type","application/json");
+
+            try (OutputStream os = connection.getOutputStream()){
+                os.write(json.getBytes());
+            }
+
+        }
+
+//        var  br = new BufferedReader(new InputStreamReader((connection.getInputStream())));
+//       var sb = new StringBuilder();
+//        String output;
+//        while ((output = br.readLine()) != null) {
+//            sb.append(output);
+//        }
+//
+//        var retornoBody = sb.toString();
+
+        return connection.getResponseCode();
+
+
+
+
+
+
+
+    }
+    private void showMessage(Alert.AlertType type, String msg){
+        Alert alerta =new Alert(type);
+        alerta.setTitle("Mensagem do Sistema!");
+        alerta.setHeaderText(null);
+        alerta.setContentText(msg);
+        alerta.showAndWait();
+    }
+
 }

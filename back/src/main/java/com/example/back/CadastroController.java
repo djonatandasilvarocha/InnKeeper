@@ -38,7 +38,7 @@ public class CadastroController {
         String email = txtEmail.getText();
         String senha = txtSenha.getText();
 
-        // Lógica para enviar os dados para a API/Service
+        // Comando para enviar o salvando do usuário para o service
         System.out.println("Salvando usuário: " + nome + " - " + email);
     }
 

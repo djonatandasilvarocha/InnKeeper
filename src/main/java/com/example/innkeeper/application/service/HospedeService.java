@@ -29,7 +29,7 @@ public class HospedeService {
                 .map(this::converterParaResponse);
     }
 
-    // Método necessário para retornar a Entidade pura nas operações de atualização
+    // Método necessário para retornar a Entidade pura nas operações de atualização da Controller
     public Optional<Hospede> buscarEntidadePorId(Long id) {
         return hospedeRepository.findById(id);
     }
@@ -46,14 +46,13 @@ public class HospedeService {
         hospedeRepository.deleteById(id);
     }
 
-    // Método auxiliar para converter a Entidade de Domínio na DTO de Resposta
     private HospedeResponse converterParaResponse(Hospede hospede) {
         return new HospedeResponse(
                 hospede.getId(),
-                hospede.getNome() != null ? hospede.getNome().toString() : "",
-                hospede.getCpf() != null ? hospede.getCpf().toString() : "",
-                hospede.getEmail() != null ? hospede.getEmail().toString() : "",
-                hospede.getTelefone() != null ? hospede.getTelefone().toString() : ""
+                hospede.getNome() != null ? hospede.getNome().toString() : "", // O nome já é texto puro ou String
+                hospede.getCpf() != null ? hospede.getCpf().value() : "",       // Record Cpf
+                hospede.getEmail() != null ? hospede.getEmail().value() : "",   // Record Email
+                hospede.getTelefone() != null ? hospede.getTelefone().value() : "" // Record Telefone/Celular
         );
     }
 }

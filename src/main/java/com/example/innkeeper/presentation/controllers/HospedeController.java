@@ -1,13 +1,15 @@
 package com.example.innkeeper.presentation.controllers;
 
+import com.example.innkeeper.application.service.HospedeService;
 import com.example.innkeeper.domain.entities.Hospede;
-import com.example.innkeeper.domain.repository.HospedeRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/hospede")
@@ -17,16 +19,20 @@ import org.springframework.web.bind.annotation.*;
 )
 public class HospedeController {
 
-    @Autowired
-    private HospedeRepository hospedeRepository;
+    private final HospedeService hospedeService;
+
+    // Injeção via construtor do Service (Adeus Repository na Controller!)
+    public HospedeController(HospedeService hospedeService) {
+        this.hospedeService = hospedeService;
+    }
 
     @GetMapping
     @Operation(
             summary = "Listar hóspedes",
             description = "Retorna todos os hóspedes cadastrados no sistema."
     )
-    public ResponseEntity<?> listarTodos() {
-        return ResponseEntity.ok(hospedeRepository.findAll());
+    public ResponseEntity<List<Hospede>> listarTodos() {
+        return ResponseEntity.ok(hospedeService.listarTodos());
     }
 
     @GetMapping("/{id}")
@@ -35,11 +41,9 @@ public class HospedeController {
             description = "Retorna um hóspede específico através do seu id."
     )
     public ResponseEntity<Hospede> buscarPorId(@PathVariable Long id) {
-        Hospede hospedeBanco = hospedeRepository.findById(id).orElse(null);
-        if (hospedeBanco != null) {
-            return ResponseEntity.ok(hospedeBanco);
-        }
-        return ResponseEntity.notFound().build();
+        Optional<Hospede> hospedeBanco = hospedeService.buscarPorId(id);
+        return hospedeBanco.map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping
@@ -49,8 +53,8 @@ public class HospedeController {
             description = "Efetua a criação de um novo hóspede."
     )
     public ResponseEntity<Hospede> criar(@RequestBody Hospede hospede) {
-        var hospedeBanco = hospedeRepository.save(hospede);
-        return ResponseEntity.ok(hospedeBanco);
+        Hospede hospedeBanco = hospedeService.salvar(hospede);
+        return ResponseEntity.status(HttpStatus.CREATED).body(hospedeBanco);
     }
 
     @PutMapping("/{id}")
@@ -59,25 +63,22 @@ public class HospedeController {
             description = "Atualiza todos os dados de um hóspede existente."
     )
     public ResponseEntity<Hospede> atualizar(@PathVariable Long id, @RequestBody Hospede hospede) {
+        Optional<Hospede> hospedeBanco = hospedeService.buscarPorId(id);
 
-        try {
-            var hospedeBanco = hospedeRepository.findById(id);
-
-            if (hospedeBanco.isEmpty()) {
-                return ResponseEntity.notFound().build();
-            }
-
-            Hospede hospedeAtual = hospedeBanco.get();
-
-            hospedeAtual.nome = hospede.nome;
-            hospedeAtual.cpf = hospede.cpf;
-            hospedeAtual.telefone = hospede.telefone;
-            hospedeAtual.email = hospede.email;
-
-            return ResponseEntity.ok(hospedeRepository.save(hospedeAtual));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        if (hospedeBanco.isEmpty()) {
+            return ResponseEntity.notFound().build();
         }
+
+        Hospede hospedeAtual = hospedeBanco.get();
+
+        // Utilizando Setters corretos por conta do encapsulamento e Value Objects
+        hospedeAtual.setNome(hospede.getNome());
+        hospedeAtual.setCpf(hospede.getCpf());
+        hospedeAtual.setTelefone(hospede.getTelefone());
+        hospedeAtual.setEmail(hospede.getEmail());
+        hospedeAtual.setStatus(hospede.getStatus());
+
+        return ResponseEntity.ok(hospedeService.salvar(hospedeAtual));
     }
 
     @PatchMapping("/{id}")
@@ -86,8 +87,7 @@ public class HospedeController {
             description = "Atualiza apenas os campos informados de um hóspede existente."
     )
     public ResponseEntity<Hospede> atualizarParcial(@PathVariable Long id, @RequestBody Hospede hospede) {
-
-        var hospedeBanco = hospedeRepository.findById(id);
+        Optional<Hospede> hospedeBanco = hospedeService.buscarPorId(id);
 
         if (hospedeBanco.isEmpty()) {
             return ResponseEntity.notFound().build();
@@ -95,23 +95,23 @@ public class HospedeController {
 
         Hospede hospedeAtual = hospedeBanco.get();
 
-        if (hospede.nome != null) {
-            hospedeAtual.nome = hospede.nome;
+        if (hospede.getNome() != null) {
+            hospedeAtual.setNome(hospede.getNome());
+        }
+        if (hospede.getCpf() != null) {
+            hospedeAtual.setCpf(hospede.getCpf());
+        }
+        if (hospede.getTelefone() != null) {
+            hospedeAtual.setTelefone(hospede.getTelefone());
+        }
+        if (hospede.getEmail() != null) {
+            hospedeAtual.setEmail(hospede.getEmail());
+        }
+        if (hospede.getStatus() != null) {
+            hospedeAtual.setStatus(hospede.getStatus());
         }
 
-        if (hospede.cpf != null) {
-            hospedeAtual.cpf = hospede.cpf;
-        }
-
-        if (hospede.telefone != null) {
-            hospedeAtual.telefone = hospede.telefone;
-        }
-
-        if (hospede.email != null) {
-            hospedeAtual.email = hospede.email;
-        }
-
-        return ResponseEntity.ok(hospedeRepository.save(hospedeAtual));
+        return ResponseEntity.ok(hospedeService.salvar(hospedeAtual));
     }
 
     @DeleteMapping("/{id}")
@@ -120,13 +120,11 @@ public class HospedeController {
             description = "Efetua a exclusão de um hóspede do sistema."
     )
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
-
-        if (!hospedeRepository.existsById(id)) {
+        if (!hospedeService.existePorId(id)) {
             return ResponseEntity.notFound().build();
         }
 
-        hospedeRepository.deleteById(id);
-
+        hospedeService.deletar(id);
         return ResponseEntity.noContent().build();
     }
 }

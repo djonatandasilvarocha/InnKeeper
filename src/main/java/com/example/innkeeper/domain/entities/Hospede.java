@@ -1,12 +1,15 @@
 package com.example.innkeeper.domain.entities;
 
-
+import com.example.innkeeper.domain.valueobjects.Celular;
+import com.example.innkeeper.domain.valueobjects.Cpf;
+import com.example.innkeeper.domain.valueobjects.Email;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
+@Table(name = "hospede")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -14,16 +17,22 @@ public class Hospede {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public Long id;
+    private Long id;
 
-    public String nome;
+    private String nome;
 
-    public String cpf;
+    @Embedded
+    @AttributeOverride(name = "value", column = @Column(name = "cpf", nullable = false, unique = true))
+    private Cpf cpf;
 
-    public String telefone;
+    @Embedded
+    @AttributeOverride(name = "value", column = @Column(name = "telefone"))
+    private Celular telefone;
 
-    public String email;
+    @Embedded
+    @AttributeOverride(name = "value", column = @Column(name = "email", nullable = false, unique = true))
+    private Email email;
 
     @Enumerated(EnumType.STRING)
-    public EnumStatusHospede status;
+    private EnumStatusHospede status;
 }

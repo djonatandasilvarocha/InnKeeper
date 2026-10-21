@@ -1,17 +1,15 @@
 package com.example.innkeeper.presentation.controllers;
 
-import com.example.innkeeper.domain.entities.EnumStatusQuarto;
-import com.example.innkeeper.domain.entities.EnumStatusReserva;
+import com.example.innkeeper.application.service.ReservaService;
 import com.example.innkeeper.domain.entities.Reserva;
-import com.example.innkeeper.domain.repository.ReservaRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
-import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/reserva")
@@ -22,11 +20,10 @@ import java.time.temporal.ChronoUnit;
 )
 public class ReservaController {
 
-    private final ReservaRepository reservaRepository;
+    private final ReservaService reservaService;
 
-    // Injeção via construtor (remove a mensagem "Field injection is not recommended")
-    public ReservaController(ReservaRepository reservaRepository) {
-        this.reservaRepository = reservaRepository;
+    public ReservaController(ReservaService reservaService) {
+        this.reservaService = reservaService;
     }
 
     @GetMapping
@@ -34,8 +31,8 @@ public class ReservaController {
             summary = "Listar reservas",
             description = "Retorna todas as reservas cadastradas no sistema."
     )
-    public ResponseEntity<?> listarTodos() {
-        return ResponseEntity.ok(reservaRepository.findAll());
+    public ResponseEntity<List<Reserva>> listarTodos() {
+        return ResponseEntity.ok(reservaService.listarTodas());
     }
 
     @GetMapping("/{id}")
@@ -44,11 +41,9 @@ public class ReservaController {
             description = "Retorna uma reserva específica através do seu id."
     )
     public ResponseEntity<Reserva> buscarPorId(@PathVariable Long id) {
-        Reserva reservaBanco = reservaRepository.findById(id).orElse(null);
-        if (reservaBanco != null) {
-            return ResponseEntity.ok(reservaBanco);
-        }
-        return ResponseEntity.notFound().build();
+        Optional<Reserva> reservaBanco = reservaService.buscarPorId(id);
+        return reservaBanco.map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping
@@ -58,8 +53,8 @@ public class ReservaController {
             description = "Efetua a criação de uma nova reserva."
     )
     public ResponseEntity<Reserva> criar(@RequestBody Reserva reserva) {
-        var reservaBanco = reservaRepository.save(reserva);
-        return ResponseEntity.ok(reservaBanco);
+        Reserva reservaBanco = reservaService.salvar(reserva);
+        return ResponseEntity.status(HttpStatus.CREATED).body(reservaBanco);
     }
 
     @PutMapping("/{id}")
@@ -69,7 +64,7 @@ public class ReservaController {
     )
     public ResponseEntity<Reserva> atualizar(@PathVariable Long id, @RequestBody Reserva reserva) {
         try {
-            var reservaBanco = reservaRepository.findById(id);
+            Optional<Reserva> reservaBanco = reservaService.buscarPorId(id);
 
             if (reservaBanco.isEmpty()) {
                 return ResponseEntity.notFound().build();
@@ -77,14 +72,14 @@ public class ReservaController {
 
             Reserva reservaAtual = reservaBanco.get();
 
-            reservaAtual.dataEntrada = reserva.dataEntrada;
-            reservaAtual.dataSaida = reserva.dataSaida;
-            reservaAtual.valorTotal = reserva.valorTotal;
-            reservaAtual.status = reserva.status;
-            reservaAtual.hospede = reserva.hospede;
-            reservaAtual.quarto = reserva.quarto;
+            reservaAtual.setDataEntrada(reserva.getDataEntrada());
+            reservaAtual.setDataSaida(reserva.getDataSaida());
+            reservaAtual.setValorTotal(reserva.getValorTotal());
+            reservaAtual.setStatus(reserva.getStatus());
+            reservaAtual.setHospede(reserva.getHospede());
+            reservaAtual.setQuarto(reserva.getQuarto());
 
-            return ResponseEntity.ok(reservaRepository.save(reservaAtual));
+            return ResponseEntity.ok(reservaService.salvar(reservaAtual));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -97,7 +92,7 @@ public class ReservaController {
     )
     public ResponseEntity<Reserva> atualizarParcial(@PathVariable Long id, @RequestBody Reserva reserva) {
 
-        var reservaBanco = reservaRepository.findById(id);
+        Optional<Reserva> reservaBanco = reservaService.buscarPorId(id);
 
         if (reservaBanco.isEmpty()) {
             return ResponseEntity.notFound().build();
@@ -105,27 +100,27 @@ public class ReservaController {
 
         Reserva reservaAtual = reservaBanco.get();
 
-        if (reserva.dataEntrada != null) {
-            reservaAtual.dataEntrada = reserva.dataEntrada;
+        if (reserva.getDataEntrada() != null) {
+            reservaAtual.setDataEntrada(reserva.getDataEntrada());
         }
 
-        if (reserva.dataSaida != null) {
-            reservaAtual.dataSaida = reserva.dataSaida;
+        if (reserva.getDataSaida() != null) {
+            reservaAtual.setDataSaida(reserva.getDataSaida());
         }
 
-        if (reserva.status != null) {
-            reservaAtual.status = reserva.status;
+        if (reserva.getStatus() != null) {
+            reservaAtual.setStatus(reserva.getStatus());
         }
 
-        if (reserva.hospede != null) {
-            reservaAtual.hospede = reserva.hospede;
+        if (reserva.getHospede() != null) {
+            reservaAtual.setHospede(reserva.getHospede());
         }
 
-        if (reserva.quarto != null) {
-            reservaAtual.quarto = reserva.quarto;
+        if (reserva.getQuarto() != null) {
+            reservaAtual.setQuarto(reserva.getQuarto());
         }
 
-        return ResponseEntity.ok(reservaRepository.save(reservaAtual));
+        return ResponseEntity.ok(reservaService.salvar(reservaAtual));
     }
 
     @PatchMapping("/{id}/checkout")
@@ -134,28 +129,13 @@ public class ReservaController {
             description = "Finaliza a reserva, calcula o valor total da estadia e libera o quarto."
     )
     public ResponseEntity<Reserva> checkout(@PathVariable Long id) {
-
-        var reservaBanco = reservaRepository.findById(id);
-
-        if (reservaBanco.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        Reserva reserva = reservaBanco.get();
-
-        if (reserva.status == EnumStatusReserva.FINALIZADA || reserva.status == EnumStatusReserva.CANCELADA) {
+        try {
+            Optional<Reserva> reservaCheckout = reservaService.realizarCheckout(id);
+            return reservaCheckout.map(ResponseEntity::ok)
+                    .orElseGet(() -> ResponseEntity.notFound().build());
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
         }
-
-        long dias = ChronoUnit.DAYS.between(reserva.dataEntrada, reserva.dataSaida);
-        BigDecimal diaria = reserva.quarto.diaria;
-
-        // Atribuição direta (remove o aviso "Local variable 'valorTotal' is redundant")
-        reserva.valorTotal = diaria.multiply(BigDecimal.valueOf(dias));
-        reserva.status = EnumStatusReserva.FINALIZADA;
-        reserva.quarto.status = EnumStatusQuarto.DISPONIVEL;
-
-        return ResponseEntity.ok(reservaRepository.save(reserva));
     }
 
     @DeleteMapping("/{id}")
@@ -164,12 +144,11 @@ public class ReservaController {
             description = "Efetua a exclusão de uma reserva do sistema."
     )
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
-
-        if (!reservaRepository.existsById(id)) {
+        if (!reservaService.existePorId(id)) {
             return ResponseEntity.notFound().build();
         }
 
-        reservaRepository.deleteById(id);
+        reservaService.deletar(id);
 
         return ResponseEntity.noContent().build();
     }

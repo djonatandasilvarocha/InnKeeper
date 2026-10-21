@@ -1,13 +1,15 @@
 package com.example.innkeeper.presentation.controllers;
 
+import com.example.innkeeper.application.service.QuartoService;
 import com.example.innkeeper.domain.entities.Quarto;
-import com.example.innkeeper.domain.repository.QuartoRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/quarto")
@@ -18,16 +20,19 @@ import org.springframework.web.bind.annotation.*;
 )
 public class QuartoController {
 
-    @Autowired
-    private QuartoRepository quartoRepository;
+    private final QuartoService quartoService;
+
+    public QuartoController(QuartoService quartoService) {
+        this.quartoService = quartoService;
+    }
 
     @GetMapping
     @Operation(
             summary = "Listar quartos",
             description = "Retorna todos os quartos cadastrados no sistema."
     )
-    public ResponseEntity<?> listarTodos() {
-        return ResponseEntity.ok(quartoRepository.findAll());
+    public ResponseEntity<List<Quarto>> listarTodos() {
+        return ResponseEntity.ok(quartoService.listarTodos());
     }
 
     @GetMapping("/{id}")
@@ -36,11 +41,9 @@ public class QuartoController {
             description = "Retorna um quarto específico através do seu id."
     )
     public ResponseEntity<Quarto> buscarPorId(@PathVariable Long id) {
-        Quarto quartoBanco = quartoRepository.findById(id).orElse(null);
-        if (quartoBanco != null) {
-            return ResponseEntity.ok(quartoBanco);
-        }
-        return ResponseEntity.notFound().build();
+        Optional<Quarto> quartoBanco = quartoService.buscarPorId(id);
+        return quartoBanco.map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping
@@ -50,8 +53,8 @@ public class QuartoController {
             description = "Efetua a criação de um novo quarto."
     )
     public ResponseEntity<Quarto> criar(@RequestBody Quarto quarto) {
-        var quartoBanco = quartoRepository.save(quarto);
-        return ResponseEntity.ok(quartoBanco);
+        Quarto quartoBanco = quartoService.salvar(quarto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(quartoBanco);
     }
 
     @PutMapping("/{id}")
@@ -60,9 +63,8 @@ public class QuartoController {
             description = "Atualiza todos os dados de um quarto existente."
     )
     public ResponseEntity<Quarto> atualizar(@PathVariable Long id, @RequestBody Quarto quarto) {
-
         try {
-            var quartoBanco = quartoRepository.findById(id);
+            Optional<Quarto> quartoBanco = quartoService.buscarPorId(id);
 
             if (quartoBanco.isEmpty()) {
                 return ResponseEntity.notFound().build();
@@ -70,13 +72,13 @@ public class QuartoController {
 
             Quarto quartoAtual = quartoBanco.get();
 
-            quartoAtual.numero = quarto.numero;
-            quartoAtual.tipo = quarto.tipo;
-            quartoAtual.capacidade = quarto.capacidade;
-            quartoAtual.diaria = quarto.diaria;
-            quartoAtual.status = quarto.status;
+            quartoAtual.setNumero(quarto.getNumero());
+            quartoAtual.setTipo(quarto.getTipo());
+            quartoAtual.setCapacidade(quarto.getCapacidade());
+            quartoAtual.setDiaria(quarto.getDiaria());
+            quartoAtual.setStatus(quarto.getStatus());
 
-            return ResponseEntity.ok(quartoRepository.save(quartoAtual));
+            return ResponseEntity.ok(quartoService.salvar(quartoAtual));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -88,8 +90,7 @@ public class QuartoController {
             description = "Atualiza apenas os campos informados de um quarto existente."
     )
     public ResponseEntity<Quarto> atualizarParcial(@PathVariable Long id, @RequestBody Quarto quarto) {
-
-        var quartoBanco = quartoRepository.findById(id);
+        Optional<Quarto> quartoBanco = quartoService.buscarPorId(id);
 
         if (quartoBanco.isEmpty()) {
             return ResponseEntity.notFound().build();
@@ -97,27 +98,27 @@ public class QuartoController {
 
         Quarto quartoAtual = quartoBanco.get();
 
-        if (quarto.numero != null) {
-            quartoAtual.numero = quarto.numero;
+        if (quarto.getNumero() != null) {
+            quartoAtual.setNumero(quarto.getNumero());
         }
 
-        if (quarto.tipo != null) {
-            quartoAtual.tipo = quarto.tipo;
+        if (quarto.getTipo() != null) {
+            quartoAtual.setTipo(quarto.getTipo());
         }
 
-        if (quarto.capacidade != null) {
-            quartoAtual.capacidade = quarto.capacidade;
+        if (quarto.getCapacidade() != null) {
+            quartoAtual.setCapacidade(quarto.getCapacidade());
         }
 
-        if (quarto.diaria != null) {
-            quartoAtual.diaria = quarto.diaria;
+        if (quarto.getDiaria() != null) {
+            quartoAtual.setDiaria(quarto.getDiaria());
         }
 
-        if (quarto.status != null) {
-            quartoAtual.status = quarto.status;
+        if (quarto.getStatus() != null) {
+            quartoAtual.setStatus(quarto.getStatus());
         }
 
-        return ResponseEntity.ok(quartoRepository.save(quartoAtual));
+        return ResponseEntity.ok(quartoService.salvar(quartoAtual));
     }
 
     @DeleteMapping("/{id}")
@@ -126,12 +127,11 @@ public class QuartoController {
             description = "Efetua a exclusão de um quarto do sistema."
     )
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
-
-        if (!quartoRepository.existsById(id)) {
+        if (!quartoService.existePorId(id)) {
             return ResponseEntity.notFound().build();
         }
 
-        quartoRepository.deleteById(id);
+        quartoService.deletar(id);
 
         return ResponseEntity.noContent().build();
     }

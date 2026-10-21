@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 
 @Entity
+@Table(name = "quarto") // Nome exato da sua tabela no PostgreSQL
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -15,16 +16,16 @@ public class Quarto {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public Long id;
+    private Long id;
 
-    public String numero;
+    private String numero;
 
-    public String tipo;
+    private String tipo;
 
-    public Integer capacidade;
+    private Integer capacidade;
 
-    public BigDecimal diaria;
+    private BigDecimal diaria;
 
     @Enumerated(EnumType.STRING)
-    public EnumStatusQuarto status;
+    private EnumStatusQuarto status;
 }

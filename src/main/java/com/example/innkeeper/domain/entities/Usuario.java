@@ -5,11 +5,11 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table; // <-- Import necessário
 import lombok.*;
 
-import java.time.LocalDateTime;
-
 @Entity
+@Table(name = "usuario") // <-- Mapeamento explícito para a tabela do PostgreSQL
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -37,6 +37,5 @@ public class Usuario {
         this.setSenha(criarAdminRequest.senha());
         this.setEmail(criarAdminRequest.email());
         this.setRole("ROLE_ADMIN");
-
     }
 }

@@ -1,6 +1,5 @@
 package com.example.innkeeper.domain.entities;
 
-
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -10,6 +9,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
+@Table(name = "reserva")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -17,22 +17,22 @@ public class Reserva {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public Long id;
+    private Long id;
 
-    public LocalDate dataEntrada;
+    private LocalDate dataEntrada;
 
-    public LocalDate dataSaida;
+    private LocalDate dataSaida;
 
-    public BigDecimal valorTotal;
-
-    @Enumerated(EnumType.STRING)
-    public EnumStatusReserva status;
+    private BigDecimal valorTotal;
 
     @ManyToOne
     @JoinColumn(name = "hospede_id")
-    public Hospede hospede;
+    private Hospede hospede;
 
     @ManyToOne
     @JoinColumn(name = "quarto_id")
-    public Quarto quarto;
+    private Quarto quarto;
+
+    @Enumerated(EnumType.STRING)
+    private EnumStatusReserva status;
 }

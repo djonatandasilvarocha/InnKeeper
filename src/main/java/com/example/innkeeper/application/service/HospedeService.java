@@ -29,7 +29,7 @@ public class HospedeService {
                 .map(this::converterParaResponse);
     }
 
-    // Método necessário para retornar a Entidade pura nas operações de atualização da Controller
+    // Metodo necessário para retornar a Entidade pura nas operações de atualização da Controller
     public Optional<Hospede> buscarEntidadePorId(Long id) {
         return hospedeRepository.findById(id);
     }

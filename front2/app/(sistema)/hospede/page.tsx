@@ -22,7 +22,7 @@ export default function Hospedes() {
   };
 
   const handleDeletarHospede = async (hospede: Hospede) => {
-    if (!confirm(`Deseja realmente excluir o hóspede ${hospede.nome}?`)) return;
+    if (!confirm(`Deseja realmente excluir o hóspede ${typeof hospede.nome === 'object' ? (hospede.nome as any).value : hospede.nome}?`)) return;
 
     try {
       const dadosRetorno = await axios.delete(
@@ -40,6 +40,15 @@ export default function Hospedes() {
     } catch (error) {
       alert("Erro ao excluir hóspede!");
     }
+  };
+
+  // Função auxiliar para extrair texto caso venha como objeto do Value Object do DDD
+  const formatarCampo = (campo: any): string => {
+    if (!campo) return "";
+    if (typeof campo === "object" && campo !== null) {
+      return campo.value || JSON.stringify(campo);
+    }
+    return String(campo);
   };
 
   return (
@@ -92,16 +101,16 @@ export default function Hospedes() {
                     #{hospede.id}
                   </td>
                   <td className="py-4 px-6 font-medium text-slate-200">
-                    {hospede.nome}
+                    {formatarCampo(hospede.nome)}
                   </td>
                   <td className="py-4 px-6 text-slate-400 font-mono text-xs">
-                    {hospede.cpf}
+                    {formatarCampo(hospede.cpf)}
                   </td>
                   <td className="py-4 px-6 text-slate-400">
-                    {hospede.email}
+                    {formatarCampo(hospede.email)}
                   </td>
                   <td className="py-4 px-6 text-slate-400">
-                    {hospede.telefone}
+                    {formatarCampo(hospede.telefone)}
                   </td>
                   <td className="py-4 px-6 text-right">
                     <div className="inline-flex items-center gap-3">

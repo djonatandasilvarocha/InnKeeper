@@ -29,7 +29,8 @@ export default function HospedeForm({ hospedeExistente }: HospedeFormProps) {
     );
   };
 
-  const handlerSalvar = async (formData: FormData) => {
+  const handlerSalvar = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault(); // Evita o comportamento padrão de recarregar a página
     try {
       if (hospedeExistente) {
         const dadosRetorno = await axios.put(
@@ -49,7 +50,7 @@ export default function HospedeForm({ hospedeExistente }: HospedeFormProps) {
           hospede
         );
 
-        if (dadosRetorno.status === 200) {
+        if (dadosRetorno.status === 200 || dadosRetorno.status === 201) {
           alert("Hóspede cadastrado com sucesso!");
         } else {
           alert(dadosRetorno.data);
@@ -58,6 +59,7 @@ export default function HospedeForm({ hospedeExistente }: HospedeFormProps) {
       }
 
       router.push("/hospede");
+      router.refresh();
     } catch (error) {
       alert("Erro ao salvar hóspede!");
     }
@@ -65,7 +67,7 @@ export default function HospedeForm({ hospedeExistente }: HospedeFormProps) {
 
   return (
     <form
-      action={handlerSalvar}
+      onSubmit={handlerSalvar}
       className="w-full max-w-2xl mx-auto bg-[#0b1120] border border-slate-800 rounded-xl p-8 shadow-2xl"
     >
       <div className="space-y-6">

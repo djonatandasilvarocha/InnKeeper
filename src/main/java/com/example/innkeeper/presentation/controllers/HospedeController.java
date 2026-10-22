@@ -1,8 +1,11 @@
 package com.example.innkeeper.presentation.controllers;
 
+import com.example.innkeeper.application.DTOs.AtualizarHospedeRequest;
+import com.example.innkeeper.application.DTOs.CriarHospedeRequest;
 import com.example.innkeeper.application.DTOs.HospedeResponse;
 import com.example.innkeeper.application.service.HospedeService;
-import com.example.innkeeper.domain.entities.Hospede;
+// O import de com.example.innkeeper.domain.entities.Hospede é removido da apresentação!
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
@@ -10,7 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/hospede")
@@ -22,7 +24,6 @@ public class HospedeController {
 
     private final HospedeService hospedeService;
 
-    // Injeção via construtor do Service
     public HospedeController(HospedeService hospedeService) {
         this.hospedeService = hospedeService;
     }
@@ -33,7 +34,7 @@ public class HospedeController {
             description = "Retorna todos os hóspedes cadastrados no sistema."
     )
     public ResponseEntity<List<HospedeResponse>> listarTodos() {
-        return ResponseEntity.ok(hospedeService.listarTodos());
+        return ResponseEntity.ok(hospedeService.listarTodosDto());
     }
 
     @GetMapping("/{id}")
@@ -42,9 +43,11 @@ public class HospedeController {
             description = "Retorna um hóspede específico através do seu id."
     )
     public ResponseEntity<HospedeResponse> buscarPorId(@PathVariable Long id) {
-        Optional<HospedeResponse> hospedeBanco = hospedeService.buscarPorId(id);
-        return hospedeBanco.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        HospedeResponse hospedeResponse = hospedeService.buscarPorIdDto(id);
+        if (hospedeResponse != null) {
+            return ResponseEntity.ok(hospedeResponse);
+        }
+        return ResponseEntity.notFound().build();
     }
 
     @PostMapping
@@ -53,10 +56,8 @@ public class HospedeController {
             summary = "Criar hóspede",
             description = "Efetua a criação de um novo hóspede."
     )
-    public ResponseEntity<HospedeResponse> criar(@RequestBody Hospede hospede) {
-        Hospede hospedeSalvo = hospedeService.salvar(hospede);
-        // Reutilizamos o método de conversão ou construímos o response diretamente
-        HospedeResponse response = hospedeService.buscarPorId(hospedeSalvo.getId()).get();
+    public ResponseEntity<HospedeResponse> criar(@RequestBody CriarHospedeRequest request) {
+        HospedeResponse response = hospedeService.criar(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -65,26 +66,12 @@ public class HospedeController {
             summary = "Atualizar hóspede",
             description = "Atualiza todos os dados de um hóspede existente."
     )
-    public ResponseEntity<HospedeResponse> atualizar(@PathVariable Long id, @RequestBody Hospede hospede) {
-        Optional<HospedeResponse> hospedeBanco = hospedeService.buscarPorId(id);
-
-        if (hospedeBanco.isEmpty()) {
-            return ResponseEntity.notFound().build();
+    public ResponseEntity<HospedeResponse> atualizar(@PathVariable Long id, @RequestBody AtualizarHospedeRequest request) {
+        HospedeResponse response = hospedeService.atualizarDto(id, request);
+        if (response != null) {
+            return ResponseEntity.ok(response);
         }
-
-        // Buscamos a entidade real para alteração
-        Hospede entidadeAtual = hospedeService.buscarEntidadePorId(id).get();
-
-        entidadeAtual.setNome(hospede.getNome());
-        entidadeAtual.setCpf(hospede.getCpf());
-        entidadeAtual.setTelefone(hospede.getTelefone());
-        entidadeAtual.setEmail(hospede.getEmail());
-        entidadeAtual.setStatus(hospede.getStatus());
-
-        Hospede atualizado = hospedeService.salvar(entidadeAtual);
-        HospedeResponse response = hospedeService.buscarPorId(atualizado.getId()).get();
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.notFound().build();
     }
 
     @PatchMapping("/{id}")
@@ -92,35 +79,12 @@ public class HospedeController {
             summary = "Atualizar hóspede parcialmente",
             description = "Atualiza apenas os campos informados de um hóspede existente."
     )
-    public ResponseEntity<HospedeResponse> atualizarParcial(@PathVariable Long id, @RequestBody Hospede hospede) {
-        Optional<HospedeResponse> hospedeBanco = hospedeService.buscarPorId(id);
-
-        if (hospedeBanco.isEmpty()) {
-            return ResponseEntity.notFound().build();
+    public ResponseEntity<HospedeResponse> atualizarParcial(@PathVariable Long id, @RequestBody AtualizarHospedeRequest request) {
+        HospedeResponse response = hospedeService.atualizarParcialDto(id, request);
+        if (response != null) {
+            return ResponseEntity.ok(response);
         }
-
-        Hospede entidadeAtual = hospedeService.buscarEntidadePorId(id).get();
-
-        if (hospede.getNome() != null) {
-            entidadeAtual.setNome(hospede.getNome());
-        }
-        if (hospede.getCpf() != null) {
-            entidadeAtual.setCpf(hospede.getCpf());
-        }
-        if (hospede.getTelefone() != null) {
-            entidadeAtual.setTelefone(hospede.getTelefone());
-        }
-        if (hospede.getEmail() != null) {
-            entidadeAtual.setEmail(hospede.getEmail());
-        }
-        if (hospede.getStatus() != null) {
-            entidadeAtual.setStatus(hospede.getStatus());
-        }
-
-        Hospede atualizado = hospedeService.salvar(entidadeAtual);
-        HospedeResponse response = hospedeService.buscarPorId(atualizado.getId()).get();
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.notFound().build();
     }
 
     @DeleteMapping("/{id}")
@@ -129,11 +93,10 @@ public class HospedeController {
             description = "Efetua a exclusão de um hóspede do sistema."
     )
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
-        if (!hospedeService.existePorId(id)) {
+        boolean deletado = hospedeService.deletarPorId(id);
+        if (!deletado) {
             return ResponseEntity.notFound().build();
         }
-
-        hospedeService.deletar(id);
         return ResponseEntity.noContent().build();
     }
 }

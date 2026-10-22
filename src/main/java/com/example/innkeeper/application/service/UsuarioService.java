@@ -19,7 +19,6 @@ public class UsuarioService {
     @Value("${spring.secret}")
     private String secret;
 
-    // Injeção via construtor (evita Field Injection e cumpre as boas práticas)
     public UsuarioService(UsuarioRepository usuarioRepository, TokenService tokenService) {
         this.usuarioRepository = usuarioRepository;
         this.tokenService = tokenService;
@@ -27,8 +26,12 @@ public class UsuarioService {
 
     // --- AUTENTICAÇÃO E REGRAS ESPECÍFICAS DE ADMIN / DTOs ---
 
+    public boolean autenticar(String email, String senha) {
+        return usuarioRepository.existsUsuarioByEmailAndSenha(email, senha);
+    }
+
     public LoginResponse validarUsuarioAutenticadoERetornaToken(LoginRequest loginRequest) {
-        if (usuarioRepository.existsUsuarioByEmailAndSenha(loginRequest.email(), loginRequest.senha())) {
+        if (autenticar(loginRequest.email(), loginRequest.senha())) {
             var token = tokenService.gerarToken(loginRequest.email());
             return new LoginResponse(token);
         }
@@ -53,18 +56,26 @@ public class UsuarioService {
         return new CriarAdminResponse(usuarioAdminSalvar.getId(), "Usuário salvo com sucesso!");
     }
 
-    // --- MÉTODOS CRUD BÁSICOS (Utilizados pela UsuarioController) ---
+    // --- NOVOS MÉTODOS CRUD USANDO DTOs (Para a UsuarioController) ---
 
-    public List<Usuario> listarTodos() {
-        return usuarioRepository.findAll();
+    public UsuarioResponse buscarPorIdDto(Long id) {
+        Optional<Usuario> usuarioBanco = usuarioRepository.findById(id);
+        return usuarioBanco.map(UsuarioResponse::new).orElse(null);
     }
 
-    public Optional<Usuario> buscarPorId(Long id) {
-        return usuarioRepository.findById(id);
-    }
+    public UsuarioResponse criar(CriarUsuarioRequest request) {
+        // Converte o DTO de Request em Entidade de Domínio
+        Usuario usuario = new Usuario();
+        usuario.setNome(request.nome());
+        usuario.setEmail(request.email());
+        usuario.setSenha(request.senha());
+        usuario.setCpf(request.cpf());
+        usuario.setStatus(EnumStatusUsuario.ATIVO); // Definindo um status padrão inicial, se aplicável
 
-    public Usuario salvar(Usuario usuario) {
-        return usuarioRepository.save(usuario);
+        Usuario salvo = usuarioRepository.save(usuario);
+
+        // Retorna o Response DTO
+        return new UsuarioResponse(salvo);
     }
 
     public boolean atualizarStatus(Long id, EnumStatusUsuario novoStatus) {
@@ -78,16 +89,19 @@ public class UsuarioService {
         return false;
     }
 
-    public Usuario atualizar(Long id, Usuario dadosAtualizados) {
+    public UsuarioResponse atualizarDto(Long id, AtualizarUsuarioRequest dadosAtualizados) {
         Optional<Usuario> usuarioBanco = usuarioRepository.findById(id);
         if (usuarioBanco.isPresent()) {
             Usuario usuario = usuarioBanco.get();
-            usuario.setStatus(dadosAtualizados.getStatus());
-            usuario.setNome(dadosAtualizados.getNome());
-            usuario.setSenha(dadosAtualizados.getSenha());
-            usuario.setCpf(dadosAtualizados.getCpf());
-            usuario.setEmail(dadosAtualizados.getEmail());
-            return usuarioRepository.save(usuario);
+
+            // Atualiza os campos permitidos com base no Request DTO
+            usuario.setNome(dadosAtualizados.nome());
+            usuario.setEmail(dadosAtualizados.email());
+            usuario.setSenha(dadosAtualizados.senha());
+            usuario.setCpf(dadosAtualizados.cpf());
+
+            Usuario atualizado = usuarioRepository.save(usuario);
+            return new UsuarioResponse(atualizado);
         }
         return null;
     }

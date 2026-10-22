@@ -1,7 +1,10 @@
 package com.example.innkeeper.presentation.controllers;
 
+import com.example.innkeeper.application.DTOs.AtualizarQuartoRequest;
+import com.example.innkeeper.application.DTOs.CriarQuartoRequest;
+import com.example.innkeeper.application.DTOs.QuartoResponse;
 import com.example.innkeeper.application.service.QuartoService;
-import com.example.innkeeper.domain.entities.Quarto;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
@@ -9,7 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/quarto")
@@ -31,8 +33,8 @@ public class QuartoController {
             summary = "Listar quartos",
             description = "Retorna todos os quartos cadastrados no sistema."
     )
-    public ResponseEntity<List<Quarto>> listarTodos() {
-        return ResponseEntity.ok(quartoService.listarTodos());
+    public ResponseEntity<List<QuartoResponse>> listarTodos() {
+        return ResponseEntity.ok(quartoService.listarTodosDto());
     }
 
     @GetMapping("/{id}")
@@ -40,10 +42,12 @@ public class QuartoController {
             summary = "Buscar quarto por id",
             description = "Retorna um quarto específico através do seu id."
     )
-    public ResponseEntity<Quarto> buscarPorId(@PathVariable Long id) {
-        Optional<Quarto> quartoBanco = quartoService.buscarPorId(id);
-        return quartoBanco.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<QuartoResponse> buscarPorId(@PathVariable Long id) {
+        QuartoResponse quartoResponse = quartoService.buscarPorIdDto(id);
+        if (quartoResponse != null) {
+            return ResponseEntity.ok(quartoResponse);
+        }
+        return ResponseEntity.notFound().build();
     }
 
     @PostMapping
@@ -52,8 +56,8 @@ public class QuartoController {
             summary = "Criar quarto",
             description = "Efetua a criação de um novo quarto."
     )
-    public ResponseEntity<Quarto> criar(@RequestBody Quarto quarto) {
-        Quarto quartoBanco = quartoService.salvar(quarto);
+    public ResponseEntity<QuartoResponse> criar(@RequestBody CriarQuartoRequest request) {
+        QuartoResponse quartoBanco = quartoService.criar(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(quartoBanco);
     }
 
@@ -62,25 +66,15 @@ public class QuartoController {
             summary = "Atualizar quarto",
             description = "Atualiza todos os dados de um quarto existente."
     )
-    public ResponseEntity<Quarto> atualizar(@PathVariable Long id, @RequestBody Quarto quarto) {
+    public ResponseEntity<QuartoResponse> atualizar(@PathVariable Long id, @RequestBody AtualizarQuartoRequest request) {
         try {
-            Optional<Quarto> quartoBanco = quartoService.buscarPorId(id);
-
-            if (quartoBanco.isEmpty()) {
-                return ResponseEntity.notFound().build();
+            QuartoResponse quartoAtualizado = quartoService.atualizarDto(id, request);
+            if (quartoAtualizado != null) {
+                return ResponseEntity.ok(quartoAtualizado);
             }
-
-            Quarto quartoAtual = quartoBanco.get();
-
-            quartoAtual.setNumero(quarto.getNumero());
-            quartoAtual.setTipo(quarto.getTipo());
-            quartoAtual.setCapacidade(quarto.getCapacidade());
-            quartoAtual.setDiaria(quarto.getDiaria());
-            quartoAtual.setStatus(quarto.getStatus());
-
-            return ResponseEntity.ok(quartoService.salvar(quartoAtual));
+            return ResponseEntity.notFound().build();
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            return ResponseEntity.badRequest().build();
         }
     }
 
@@ -89,36 +83,12 @@ public class QuartoController {
             summary = "Atualizar quarto parcialmente",
             description = "Atualiza apenas os campos informados de um quarto existente."
     )
-    public ResponseEntity<Quarto> atualizarParcial(@PathVariable Long id, @RequestBody Quarto quarto) {
-        Optional<Quarto> quartoBanco = quartoService.buscarPorId(id);
-
-        if (quartoBanco.isEmpty()) {
-            return ResponseEntity.notFound().build();
+    public ResponseEntity<QuartoResponse> atualizarParcial(@PathVariable Long id, @RequestBody AtualizarQuartoRequest request) {
+        QuartoResponse quartoAtualizado = quartoService.atualizarParcialDto(id, request);
+        if (quartoAtualizado != null) {
+            return ResponseEntity.ok(quartoAtualizado);
         }
-
-        Quarto quartoAtual = quartoBanco.get();
-
-        if (quarto.getNumero() != null) {
-            quartoAtual.setNumero(quarto.getNumero());
-        }
-
-        if (quarto.getTipo() != null) {
-            quartoAtual.setTipo(quarto.getTipo());
-        }
-
-        if (quarto.getCapacidade() != null) {
-            quartoAtual.setCapacidade(quarto.getCapacidade());
-        }
-
-        if (quarto.getDiaria() != null) {
-            quartoAtual.setDiaria(quarto.getDiaria());
-        }
-
-        if (quarto.getStatus() != null) {
-            quartoAtual.setStatus(quarto.getStatus());
-        }
-
-        return ResponseEntity.ok(quartoService.salvar(quartoAtual));
+        return ResponseEntity.notFound().build();
     }
 
     @DeleteMapping("/{id}")
@@ -127,12 +97,10 @@ public class QuartoController {
             description = "Efetua a exclusão de um quarto do sistema."
     )
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
-        if (!quartoService.existePorId(id)) {
+        boolean deletado = quartoService.deletarPorId(id);
+        if (!deletado) {
             return ResponseEntity.notFound().build();
         }
-
-        quartoService.deletar(id);
-
         return ResponseEntity.noContent().build();
     }
 }

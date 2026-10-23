@@ -15,9 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/auth")
-@Tag(name="Autenticação", description = "Controller de autenticação")
+@Tag(name = "Autenticação", description = "Controller de autenticação")
 public class AuthController {
-
 
     @Autowired
     private TokenService tokenService;
@@ -27,16 +26,14 @@ public class AuthController {
 
     @PostMapping("/login")
     @Operation(description = "Método de login", summary = "Autenticação de usuarios")
-    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest){
+    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
 
-
-        if(usuarioRepository.existsUsuarioByEmailAndSenha(loginRequest.email(), loginRequest.senha())){
-            //Gera Token
-            var token = tokenService.gerarToken(loginRequest.email());
+        if (usuarioRepository.existsUsuarioByEmailAndSenha(loginRequest.email(), loginRequest.senha())) {
+            // Gera o Token passando o objeto LoginRequest completo
+            var token = tokenService.gerarToken(loginRequest);
 
             return ResponseEntity.ok(new LoginResponse(token));
         }
         return ResponseEntity.badRequest().body("Usuario ou senha invalido!");
     }
-
 }

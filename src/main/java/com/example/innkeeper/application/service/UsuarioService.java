@@ -4,41 +4,34 @@ import com.example.innkeeper.application.DTOs.*;
 import com.example.innkeeper.domain.entities.EnumStatusUsuario;
 import com.example.innkeeper.domain.entities.Usuario;
 import com.example.innkeeper.domain.repository.UsuarioRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class UsuarioService {
 
-    private final UsuarioRepository usuarioRepository;
-    private final TokenService tokenService;
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private TokenService tokenService;
 
     @Value("${spring.secret}")
     private String secret;
 
-    public UsuarioService(UsuarioRepository usuarioRepository, TokenService tokenService) {
-        this.usuarioRepository = usuarioRepository;
-        this.tokenService = tokenService;
-    }
-
-    // --- AUTENTICAÇÃO E REGRAS ESPECÍFICAS DE ADMIN / DTOs ---
-
-    public boolean autenticar(String email, String senha) {
-        return usuarioRepository.existsUsuarioByEmailAndSenha(email, senha);
-    }
-
-    public LoginResponse validarUsuarioAutenticadoERetornaToken(LoginRequest loginRequest) {
-        if (autenticar(loginRequest.email(), loginRequest.senha())) {
-            var token = tokenService.gerarToken(loginRequest.email());
+    public LoginResponse validarUsuarioAutenticadoRetornaToken(LoginRequest request) {
+        if (usuarioRepository.existsUsuarioByEmailAndSenha(request.email(), request.senha())) {
+            var token = tokenService.gerarToken(request);
             return new LoginResponse(token);
         }
         return null;
     }
 
-    public List<UsuarioResponse> ListarTodosUsuariosTable() {
+    public List<UsuarioResponse> listarTodosUsuariosTable() {
         return usuarioRepository.findAll()
                 .stream()
                 .map(UsuarioResponse::new)
@@ -56,62 +49,52 @@ public class UsuarioService {
         return new CriarAdminResponse(usuarioAdminSalvar.getId(), "Usuário salvo com sucesso!");
     }
 
-    // --- NOVOS MÉTODOS CRUD USANDO DTOs (Para a UsuarioController) ---
-
-    public UsuarioResponse buscarPorIdDto(Long id) {
-        Optional<Usuario> usuarioBanco = usuarioRepository.findById(id);
-        return usuarioBanco.map(UsuarioResponse::new).orElse(null);
+    public UsuarioLogado getUsuarioLogado() {
+        return (UsuarioLogado) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 
-    public UsuarioResponse criar(CriarUsuarioRequest request) {
-        // Converte o DTO de Request em Entidade de Domínio
-        Usuario usuario = new Usuario();
-        usuario.setNome(request.nome());
-        usuario.setEmail(request.email());
-        usuario.setSenha(request.senha());
-        usuario.setCpf(request.cpf());
-        usuario.setStatus(EnumStatusUsuario.ATIVO); // Definindo um status padrão inicial, se aplicável
+    public UsuarioResponse salvarUsuario(CriarUsuarioRequest usuario, Long id) {
+        var usuarioLogado = getUsuarioLogado();
 
-        Usuario salvo = usuarioRepository.save(usuario);
+        // Novo Usuário
+        if (id == 0L) {
+            Usuario usuarioBanco = new Usuario();
+            usuarioBanco.setNome(usuario.nome());
+            usuarioBanco.setCpf(usuario.cpf());
+            usuarioBanco.setEmail(usuario.email());
+            usuarioBanco.setSenha(usuario.senha());
 
-        // Retorna o Response DTO
-        return new UsuarioResponse(salvo);
-    }
-
-    public boolean atualizarStatus(Long id, EnumStatusUsuario novoStatus) {
-        Optional<Usuario> usuarioBanco = usuarioRepository.findById(id);
-        if (usuarioBanco.isPresent()) {
-            Usuario usuario = usuarioBanco.get();
-            usuario.setStatus(novoStatus);
-            usuarioRepository.save(usuario);
-            return true;
+            usuarioRepository.save(usuarioBanco);
+            return new UsuarioResponse(usuarioBanco);
+        } else {
+            // Usuário existente
+            Usuario usuarioBanco = usuarioRepository.findById(id).orElse(null);
+            if (usuarioBanco != null) {
+                usuarioBanco.setNome(usuario.nome());
+                usuarioBanco.setCpf(usuario.cpf());
+                usuarioBanco.setEmail(usuario.email());
+                usuarioBanco.setSenha(usuario.senha());
+                usuarioRepository.save(usuarioBanco);
+                return new UsuarioResponse(usuarioBanco);
+            }
         }
-        return false;
-    }
 
-    public UsuarioResponse atualizarDto(Long id, AtualizarUsuarioRequest dadosAtualizados) {
-        Optional<Usuario> usuarioBanco = usuarioRepository.findById(id);
-        if (usuarioBanco.isPresent()) {
-            Usuario usuario = usuarioBanco.get();
-
-            // Atualiza os campos permitidos com base no Request DTO
-            usuario.setNome(dadosAtualizados.nome());
-            usuario.setEmail(dadosAtualizados.email());
-            usuario.setSenha(dadosAtualizados.senha());
-            usuario.setCpf(dadosAtualizados.cpf());
-
-            Usuario atualizado = usuarioRepository.save(usuario);
-            return new UsuarioResponse(atualizado);
-        }
         return null;
     }
 
-    public boolean excluirLogico(Long id) {
-        Optional<Usuario> usuarioBanco = usuarioRepository.findById(id);
-        if (usuarioBanco.isPresent()) {
-            Usuario usuario = usuarioBanco.get();
-            usuario.setStatus(EnumStatusUsuario.EXCLUIDO);
-            usuarioRepository.save(usuario);
+    public UsuarioResponse buscarPorId(Long id) {
+        var usuario = usuarioRepository.findById(id).orElse(null);
+        if (usuario == null) {
+            return null;
+        }
+        return new UsuarioResponse(usuario);
+    }
+
+    public boolean atualizarStatus(EnumStatusUsuario status, Long id) {
+        Usuario usuarioBanco = usuarioRepository.findById(id).orElse(null);
+        if (usuarioBanco != null) {
+            usuarioBanco.setStatus(status);
+            usuarioRepository.save(usuarioBanco);
             return true;
         }
         return false;

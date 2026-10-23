@@ -1,5 +1,6 @@
 package com.example.innkeeper.configuration;
 
+import com.example.innkeeper.configuration.JwtFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,8 +25,8 @@ public class SecurityConfig {
         return http.cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        // Rotas públicas que não exigem token (incluindo o login em /usuarios/login)
                         .requestMatchers(
+                                "/auth/login",
                                 "/usuarios/login",
                                 "/usuarios",
                                 "/usuarios/admin",
@@ -34,7 +35,6 @@ public class SecurityConfig {
                                 "/swagger-resources/**",
                                 "/v3/api-docs/**"
                         ).permitAll()
-                        // Qualquer outra rota exige autenticação via JWT
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
@@ -43,7 +43,6 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        // Mantém as senhas em texto plano para facilitar os seus testes locais
         return NoOpPasswordEncoder.getInstance();
     }
 }

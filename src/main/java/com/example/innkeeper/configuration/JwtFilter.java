@@ -12,7 +12,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.List;
 
 @Component
 public class JwtFilter extends OncePerRequestFilter {
@@ -21,16 +20,18 @@ public class JwtFilter extends OncePerRequestFilter {
     private TokenService tokenService;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
 
         String uri = request.getRequestURI();
 
+        // Rotas públicas que não exigem token JWT
         if (uri.startsWith("/swagger-ui")
                 || uri.startsWith("/v2/api-docs")
                 || uri.startsWith("/v3/api-docs")
                 || uri.startsWith("/swagger-resources")
                 || uri.startsWith("/webjars")
-                || uri.startsWith("/usuarios") // <--- ADICIONE ESTA LINHA AQUI
+                || uri.startsWith("/auth/login")
         ) {
             filterChain.doFilter(request, response);
             return;
@@ -42,12 +43,13 @@ public class JwtFilter extends OncePerRequestFilter {
             String token = authHeader.replace("Bearer ", "");
 
             try {
-                var jwtValidador = tokenService.verificarToken(token);
+                // Valida o token e retorna o UsuarioLogado
+                var usuarioLogado = tokenService.verificarToken(token);
 
                 var user = new UsernamePasswordAuthenticationToken(
-                        jwtValidador.getSubject(),
+                        usuarioLogado,
                         null,
-                        List.of()
+                        usuarioLogado.authorities()
                 );
 
                 SecurityContextHolder.getContext().setAuthentication(user);

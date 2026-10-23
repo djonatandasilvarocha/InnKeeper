@@ -1,10 +1,15 @@
 package com.example.innkeeper.application.service;
 
 import com.auth0.jwt.JWT;
+import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.auth0.jwt.interfaces.JWTVerifier;
+import com.example.innkeeper.domain.entities.Token;
+import com.example.innkeeper.domain.entities.Usuario;
+import com.example.innkeeper.domain.repository.TokenRepository;
+import com.example.innkeeper.domain.repository.UsuarioRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -17,44 +22,47 @@ public class TokenService {
 
     @Value("${spring.secret}")
     private String secret;
+
     @Value("${spring.expiracao}")
     private Long expiracao;
+
     @Value("${spring.emissor}")
     private String emissor;
 
-    public String gerarToken(String subject){
+    @Autowired
+    private UsuarioRepository usuarioRepository;
 
-        try{
-            Algorithm algorithm = Algorithm.HMAC256(secret);
+    @Autowired
+    private TokenRepository tokenRepository;
 
-            String token = JWT.create()
-                    .withIssuer(emissor)
-                    .withSubject(subject)
-                    .withExpiresAt(getDataExpiracao())
-                    .sign(algorithm);
+    public String gerarToken(String email) {
+        Algorithm algorithm = Algorithm.HMAC256(secret);
 
-            return token;
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElse(null);
 
-        } catch (RuntimeException e) {
-            throw new RuntimeException(e);
+        String token = JWT.create()
+                .withIssuer(emissor)
+                .withSubject(email)
+                .withExpiresAt(this.getDataExpiracao())
+                .sign(algorithm);
+
+        if (usuario != null) {
+            tokenRepository.save(new Token(token, usuario));
         }
+
+        return token;
     }
 
-    public DecodedJWT verificarToken(String token)throws JWTVerificationException {
-
+    public DecodedJWT verificarToken(String token) throws JWTVerificationException {
         Algorithm algorithm = Algorithm.HMAC256(secret);
         JWTVerifier verificador = JWT.require(algorithm).withIssuer(emissor).build();
         return verificador.verify(token);
     }
 
-    private Instant getDataExpiracao(){
-
-        //pegar data atual
+    private Instant getDataExpiracao() {
         var dataAtual = LocalDateTime.now();
-        //adicionar ou diminuir tempo da data atual
         var dataFutura = dataAtual.plusMinutes(expiracao);
-        //Converter fuso do Brasil
         return dataFutura.toInstant(ZoneOffset.of("-03:00"));
     }
-
 }

@@ -1,16 +1,8 @@
 package com.example.innkeeper.presentation.controllers;
 
-import com.example.innkeeper.application.DTOs.AtualizarStatusRequest;
-import com.example.innkeeper.application.DTOs.AtualizarUsuarioRequest; // Crie este DTO na camada application se não existir
-import com.example.innkeeper.application.DTOs.CriarAdminRequest;
-import com.example.innkeeper.application.DTOs.CriarAdminResponse;
-import com.example.innkeeper.application.DTOs.CriarUsuarioRequest; // Crie este DTO na camada application se não existir
-import com.example.innkeeper.application.DTOs.LoginRequest;
-import com.example.innkeeper.application.DTOs.LoginResponse;
-import com.example.innkeeper.application.DTOs.UsuarioResponse;
+import com.example.innkeeper.application.DTOs.*;
 import com.example.innkeeper.application.service.UsuarioService;
-// ADDEUS: O import de com.example.innkeeper.domain.entities.Usuario foi removido daqui![cite: 1, 2, 3]
-
+import com.example.innkeeper.domain.entities.EnumStatusUsuario;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
@@ -30,23 +22,14 @@ public class UsuarioController {
         this.usuarioService = usuarioService;
     }
 
-    @PostMapping("/login")
-    @Operation(summary = "Autenticar usuário", description = "Valida as credenciais de email e senha e retorna um token de acesso.")
-    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) {
-        LoginResponse response = usuarioService.validarUsuarioAutenticadoERetornaToken(loginRequest);
-        if (response != null) {
-            return ResponseEntity.ok(response);
-        }
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-    }
-
     @GetMapping
-    @Operation(summary = "Método de consulta de lista de usuários", description = "Método responsável por efetuar a consulta de todos os usuários sem filtro.")
+    @Operation(summary = "Método de consulta de lista de usuários")
     public ResponseEntity<List<UsuarioResponse>> listarTodos() {
-        return ResponseEntity.ok(usuarioService.ListarTodosUsuariosTable());
+        return ResponseEntity.ok(usuarioService.listarTodosUsuariosTable());
     }
 
     @PostMapping("/admin")
+    @Operation(summary = "Criar usuário administrador")
     public ResponseEntity<CriarAdminResponse> criarAdmin(@RequestBody CriarAdminRequest criarAdminRequest){
         try {
             CriarAdminResponse respostaSalvar = usuarioService.criarAdmin(criarAdminRequest);
@@ -57,9 +40,9 @@ public class UsuarioController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Método de consulta de usuário por ID", description = "Método responsável por efetuar a busca de um usuário específico através do seu ID.")
+    @Operation(summary = "Método de consulta de usuário por ID")
     public ResponseEntity<UsuarioResponse> buscarPorId(@PathVariable Long id) {
-        UsuarioResponse usuarioResponse = usuarioService.buscarPorIdDto(id); // Ajuste no service para retornar DTO
+        UsuarioResponse usuarioResponse = usuarioService.buscarPorId(id);
         if (usuarioResponse != null) {
             return ResponseEntity.ok(usuarioResponse);
         }
@@ -68,16 +51,21 @@ public class UsuarioController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Método de criação de usuários", description = "Método responsável por efetuar a criação de novos usuários.")
-    public ResponseEntity<UsuarioResponse> criar(@RequestBody CriarUsuarioRequest request) {
-        UsuarioResponse novoUsuario = usuarioService.criar(request); // Service recebe o Request DTO e devolve Response DTO
-        return ResponseEntity.status(HttpStatus.CREATED).body(novoUsuario);
+    @Operation(summary = "Método de criação de usuários")
+    public ResponseEntity<?> criar(@RequestBody CriarUsuarioRequest request) {
+        try {
+            // Utiliza o método correspondente do service recebendo o CriarUsuarioRequest
+            UsuarioResponse novoUsuario = usuarioService.salvarUsuario(request, 0L);
+            return ResponseEntity.status(HttpStatus.CREATED).body(novoUsuario);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @PatchMapping("/{id}/status")
-    @Operation(summary = "Método de atualização de status do usuário", description = "Método responsável por atualizar apenas o status de um usuário específico.")
+    @Operation(summary = "Atualizar status do usuário")
     public ResponseEntity<Void> atualizarStatus(@PathVariable Long id, @RequestBody AtualizarStatusRequest statusRequest) {
-        boolean atualizado = usuarioService.atualizarStatus(id, statusRequest.status());
+        boolean atualizado = usuarioService.atualizarStatus(statusRequest.status(), id);
         if (atualizado) {
             return ResponseEntity.ok().build();
         }
@@ -85,23 +73,23 @@ public class UsuarioController {
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Método de atualização de usuário", description = "Método responsável por atualizar todos os dados de um usuário existente.")
-    public ResponseEntity<UsuarioResponse> atualizar(@PathVariable Long id, @RequestBody AtualizarUsuarioRequest request) {
+    @Operation(summary = "Atualizar usuário completo")
+    public ResponseEntity<?> atualizar(@PathVariable Long id, @RequestBody CriarUsuarioRequest request) {
         try {
-            UsuarioResponse usuarioAtualizado = usuarioService.atualizarDto(id, request);
+            UsuarioResponse usuarioAtualizado = usuarioService.salvarUsuario(request, id);
             if (usuarioAtualizado != null) {
                 return ResponseEntity.ok(usuarioAtualizado);
             }
             return ResponseEntity.notFound().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
     @DeleteMapping("/{id}/excluir")
-    @Operation(summary = "Método de exclusão de usuário", description = "Método responsável por efetuar a exclusão lógica de um usuário, alterando seu status para EXCLUIDO.")
+    @Operation(summary = "Exclusão lógica de usuário")
     public ResponseEntity<Void> excluir(@PathVariable Long id) {
-        boolean excluido = usuarioService.excluirLogico(id);
+        boolean excluido = usuarioService.atualizarStatus(EnumStatusUsuario.EXCLUIDO, id);
         if (excluido) {
             return ResponseEntity.ok().build();
         }

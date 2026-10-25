@@ -9,6 +9,7 @@ import jakarta.persistence.Table;
 import lombok.*;
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
@@ -47,16 +48,29 @@ public class Usuario implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of();
+        if (this.role.equalsIgnoreCase("ROLE_ADMIN") || this.role.equalsIgnoreCase("ADMINISTRADOR")) {
+            return List.of(
+                    new SimpleGrantedAuthority("ROLE_ADMIN"),
+                    new SimpleGrantedAuthority("ROLE_FUNCIONARIO"),
+                    new SimpleGrantedAuthority("ROLE_HOSPEDE")
+            );
+        } else if (this.role.equalsIgnoreCase("ROLE_FUNCIONARIO") || this.role.equalsIgnoreCase("FUNCIONARIO")) {
+            return List.of(
+                    new SimpleGrantedAuthority("ROLE_FUNCIONARIO"),
+                    new SimpleGrantedAuthority("ROLE_HOSPEDE")
+            );
+        } else {
+            return List.of(new SimpleGrantedAuthority("ROLE_HOSPEDE"));
+        }
     }
 
     @Override
     public @Nullable String getPassword() {
-        return this.senha; // Retorna a senha correta para o Spring conseguir autenticar
+        return this.senha;
     }
 
     @Override
     public String getUsername() {
-        return this.email; // Ou o campo que você usa para login (ex: email)
+        return this.email;
     }
 }

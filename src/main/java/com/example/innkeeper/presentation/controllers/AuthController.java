@@ -2,8 +2,8 @@ package com.example.innkeeper.presentation.controllers;
 
 import com.example.innkeeper.application.DTOs.LoginRequest;
 import com.example.innkeeper.application.DTOs.LoginResponse;
-import com.example.innkeeper.domain.repository.UsuarioRepository;
 import com.example.innkeeper.application.service.TokenService;
+import com.example.innkeeper.domain.repository.UsuarioRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +29,7 @@ public class AuthController {
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
 
         if (usuarioRepository.existsUsuarioByEmailAndSenha(loginRequest.email(), loginRequest.senha())) {
-            // Gera o Token passando o objeto LoginRequest completo
+            // Gera o Token salvando no banco e o retorna
             var token = tokenService.gerarToken(loginRequest);
 
             return ResponseEntity.ok(new LoginResponse(token));

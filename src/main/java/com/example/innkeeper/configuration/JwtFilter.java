@@ -25,16 +25,19 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String uri = request.getRequestURI();
 
-        // Rotas públicas que não exigem token JWT
-        if (uri.startsWith("/swagger-ui")
+        // Rotas públicas ou que não devem ser barradas diretamente pelo filtro
+        if(uri.startsWith("/swagger-ui")
                 || uri.startsWith("/v2/api-docs")
                 || uri.startsWith("/v3/api-docs")
                 || uri.startsWith("/swagger-resources")
-                || uri.startsWith("/webjars")
+                || uri.startsWith("webjars")
                 || uri.startsWith("/auth/login")
-                || uri.startsWith("/usuarios/login")
-        ) {
-            filterChain.doFilter(request, response);
+                || uri.startsWith("/usuarios")
+                || uri.startsWith("/hospede")
+                || uri.startsWith("/quarto")
+                || uri.startsWith("/reserva")
+        ){
+            filterChain.doFilter(request,response);
             return;
         }
 

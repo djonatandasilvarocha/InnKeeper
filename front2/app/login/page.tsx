@@ -1,36 +1,48 @@
-'use client'
+"use client";
 
+import { useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import { LoginResponse } from "../types/auth";
 
 export default function Login() {
   const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handlerLogin = async (formData: FormData) => {
-    try{
-    debugger;
-    const emailTela = formData.get("email")?.toString() ?? "";
-    const senhaTela = formData.get("senha")?.toString() ?? "";
+  const handlerLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
 
-    var loginResposta = await axios.post<LoginResponse>("http://localhost:8080/auth/login", 
-    {email:emailTela, senha:senhaTela});
+    try {
+      const response = await axios.post("http://localhost:8080/auth/login", {
+        email,
+        senha,
+      });
 
-    if(loginResposta.status==200) {
-      router.push("/home")
-    }else{
-      alert("Login ou senha Invalido!")
+      if (response.status === 200) {
+        // O backend retorna um DTO LoginResponse contendo o token
+        // Vamos capturar independentemente se vier como .token ou direto na raiz
+        const token = response.data?.token || response.data;
+
+        if (token) {
+          localStorage.setItem("token", token);
+          console.log("Token salvo com sucesso:", token);
+          router.push("/home");
+        } else {
+          alert("Token não encontrado na resposta do servidor.");
+        }
+      }
+    } catch (error: any) {
+      console.error("Erro no login:", error);
+      alert("E-mail ou senha inválidos!");
+    } finally {
+      setLoading(false);
     }
-  }catch (error){
-    alert("Login ou senha Invalido!")
-  }
-
   };
 
   return (
-    // FUNDO EXTERNO: Slate super limpo com orbes luminosos em tom Teal/Emerald no fundo
     <div className="relative min-h-screen w-full flex items-center justify-center bg-slate-50 p-4 antialiased overflow-hidden selection:bg-teal-500 selection:text-white">
-      
       {/* Detalhes/Efeitos de brilho flutuando ao fundo */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-to-tr from-teal-400/20 to-emerald-300/20 rounded-full blur-3xl pointer-events-none -z-10 animate-pulse" />
       <div className="absolute bottom-10 right-10 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl pointer-events-none -z-10" />
@@ -57,41 +69,41 @@ export default function Login() {
           </p>
         </div>
 
-        <form action={handlerLogin} className="space-y-5">
+        <form onSubmit={handlerLogin} className="space-y-5">
           <div>
-            {/* LABEL E-MAIL */}
             <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
               E-mail
             </label>
-            {/* INPUT E-MAIL */}
             <input
-              name="email"
               type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               placeholder="seu@email.com"
+              required
               className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all duration-200 text-sm"
             />
           </div>
 
           <div>
-            {/* LABEL SENHA */}
             <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
               Senha
             </label>
-            {/* INPUT SENHA */}
             <input
-              name="senha"
               type="password"
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
               placeholder="••••••••"
+              required
               className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all duration-200 text-sm"
             />
           </div>
 
-          {/* BOTÃO SUBMIT */}
           <button
             type="submit"
-            className="w-full h-12 flex items-center justify-center bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-teal-600/30 hover:shadow-teal-600/40 transition-all duration-200 ease-in-out active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 mt-6"
+            disabled={loading}
+            className="w-full h-12 flex items-center justify-center bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-teal-600/30 hover:shadow-teal-600/40 transition-all duration-200 ease-in-out active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 mt-6 disabled:opacity-50"
           >
-            Entrar
+            {loading ? "Entrando..." : "Entrar"}
           </button>
         </form>
       </div>  

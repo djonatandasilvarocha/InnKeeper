@@ -14,7 +14,13 @@ export default function Hospedes() {
 
   const carregarDados = async () => {
     try {
-      const dados = await axios.get<Hospede[]>("http://localhost:8080/hospede");
+      const token = localStorage.getItem("token");
+
+      const dados = await axios.get<Hospede[]>("http://localhost:8080/hospede", {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       setHospedes(dados.data);
     } catch (error) {
       alert("Erro ao carregar lista de hóspedes!");
@@ -25,8 +31,15 @@ export default function Hospedes() {
     if (!confirm(`Deseja realmente excluir o hóspede ${typeof hospede.nome === 'object' ? (hospede.nome as any).value : hospede.nome}?`)) return;
 
     try {
+      const token = localStorage.getItem("token");
+
       const dadosRetorno = await axios.delete(
-        `http://localhost:8080/hospede/${hospede.id}`
+        `http://localhost:8080/hospede/${hospede.id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
       );
 
       if (dadosRetorno.status === 200) {
@@ -42,7 +55,6 @@ export default function Hospedes() {
     }
   };
 
-  // Função auxiliar para extrair texto caso venha como objeto do Value Object do DDD
   const formatarCampo = (campo: any): string => {
     if (!campo) return "";
     if (typeof campo === "object" && campo !== null) {

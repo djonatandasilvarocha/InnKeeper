@@ -14,7 +14,13 @@ export default function Quartos() {
 
   const carregarDados = async () => {
     try {
-      const dados = await axios.get<Quarto[]>("http://localhost:8080/quarto");
+      const token = localStorage.getItem("token");
+
+      const dados = await axios.get<Quarto[]>("http://localhost:8080/quarto", {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       setQuartos(dados.data);
     } catch (error) {
       alert("Erro ao carregar lista de quartos!");
@@ -25,8 +31,15 @@ export default function Quartos() {
     if (!confirm(`Deseja realmente excluir o quarto Nº ${quarto.numero}?`)) return;
 
     try {
+      const token = localStorage.getItem("token");
+
       const dadosRetorno = await axios.delete(
-        `http://localhost:8080/quarto/${quarto.id}`
+        `http://localhost:8080/quarto/${quarto.id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
       );
 
       if (dadosRetorno.status === 200 || dadosRetorno.status === 204) {
@@ -44,7 +57,6 @@ export default function Quartos() {
 
   return (
     <div className="bg-slate-950 text-slate-100 p-6 md:p-10 space-y-8 font-sans">
-      {/* Cabeçalho */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-50">
@@ -66,7 +78,6 @@ export default function Quartos() {
         </Link>
       </div>
 
-      {/* Tabela de Quartos */}
       <div className="bg-slate-900/80 border border-slate-800/80 rounded-2xl shadow-xl overflow-hidden backdrop-blur-md">
         <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/40">
           <span className="text-xs text-slate-400">

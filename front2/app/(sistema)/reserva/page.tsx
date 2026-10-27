@@ -14,7 +14,13 @@ export default function Reservas() {
 
   const carregarDados = async () => {
     try {
-      const dados = await axios.get<Reserva[]>("http://localhost:8080/reserva");
+      const token = localStorage.getItem("token");
+
+      const dados = await axios.get<Reserva[]>("http://localhost:8080/reserva", {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       setReservas(dados.data);
     } catch (error) {
       alert("Erro ao carregar lista de reservas!");
@@ -25,8 +31,16 @@ export default function Reservas() {
     if (!confirm(`Deseja realizar o checkout da reserva #${reserva.id}?`)) return;
 
     try {
+      const token = localStorage.getItem("token");
+
       const dadosRetorno = await axios.patch(
-        `http://localhost:8080/reserva/${reserva.id}/checkout`
+        `http://localhost:8080/reserva/${reserva.id}/checkout`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
       );
 
       if (dadosRetorno.status === 200) {
@@ -44,8 +58,15 @@ export default function Reservas() {
     if (!confirm(`Deseja realmente excluir a reserva #${reserva.id}?`)) return;
 
     try {
+      const token = localStorage.getItem("token");
+
       const dadosRetorno = await axios.delete(
-        `http://localhost:8080/reserva/${reserva.id}`
+        `http://localhost:8080/reserva/${reserva.id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
       );
 
       if (dadosRetorno.status === 200 || dadosRetorno.status === 204) {

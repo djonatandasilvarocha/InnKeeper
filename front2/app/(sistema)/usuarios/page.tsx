@@ -14,7 +14,13 @@ export default function Usuarios() {
 
   const carregarDados = async () => {
     try {
-      const dados = await axios.get<Usuario[]>("http://localhost:8080/usuarios");
+      const token = localStorage.getItem("token");
+
+      const dados = await axios.get<Usuario[]>("http://localhost:8080/usuarios", {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       setUsuarios(dados.data);
     } catch (error) {
       alert("Erro ao carregar dados!");
@@ -23,8 +29,15 @@ export default function Usuarios() {
 
   const handleDeletarUsuario = async (usuario: Usuario) => {
     try {
+      const token = localStorage.getItem("token");
+
       var dadosRetorno = await axios.delete(
-        `http://localhost:8080/usuarios/${usuario.id}/excluir`
+        `http://localhost:8080/usuarios/${usuario.id}/excluir`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
       );
 
       if (dadosRetorno.status === 200) {
@@ -42,6 +55,8 @@ export default function Usuarios() {
 
   const handleAlterarStatusUsuario = async (usuario: Usuario) => {
     try {
+      const token = localStorage.getItem("token");
+
       var novoStatus =
         usuario.status === "ATIVO"
           ? { status: "BLOQUEADO" }
@@ -49,7 +64,12 @@ export default function Usuarios() {
 
       var dadosRetorno = await axios.patch(
         `http://localhost:8080/usuarios/${usuario.id}/status`,
-        novoStatus
+        novoStatus,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
       );
 
       if (dadosRetorno.status === 200) {

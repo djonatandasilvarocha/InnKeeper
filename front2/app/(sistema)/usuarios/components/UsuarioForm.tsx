@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import axios from "axios";
+import { atualizarUsuario, salvarUsuario } from "@/app/services/usuarioService";
 import { Usuario, UsuarioFormProps } from "@/app/types/usuario";
 
 export default function UsuarioForm({ usuarioExistente }: UsuarioFormProps) {
@@ -17,50 +17,43 @@ export default function UsuarioForm({ usuarioExistente }: UsuarioFormProps) {
     campo: "nome" | "email" | "cpf" | "senha",
     valor: string
   ) => {
-    setUsuario(
-      (valorAnterior) =>
-        new Usuario(
-          valorAnterior.id,
-          campo === "nome" ? valor : valorAnterior.nome,
-          campo === "email" ? valor : valorAnterior.email,
-          valorAnterior.status,
-          campo === "cpf" ? valor : valorAnterior.cpf,
-          campo === "senha" ? valor : valorAnterior.senha
-        )
+    setUsuario((valorAnterior) =>
+      new Usuario(
+        valorAnterior.id,
+        campo === "nome" ? valor : valorAnterior.nome,
+        campo === "email" ? valor : valorAnterior.email,
+        valorAnterior.status,
+        campo === "cpf" ? valor : valorAnterior.cpf,
+        campo === "senha" ? valor : valorAnterior.senha
+      )
     );
   };
 
   const handlerSalvar = async (e: React.FormEvent) => {
     e.preventDefault();
+
     try {
       if (usuarioExistente) {
-        var dadosRetorno = await axios.put<number>(
-          `http://localhost:8080/usuarios/${usuario.id}`,
-          usuario
-        );
-
-        if (dadosRetorno.status === 200) {
-          alert("Usuário foi salvo com sucesso!");
+        const dadosRetorno = await atualizarUsuario(usuario);
+        if (dadosRetorno) {
+          alert("Usuário foi atualizado com sucesso!");
         } else {
-          alert(dadosRetorno.data);
+          alert("Erro ao atualizar usuário!");
           return;
         }
       } else {
-        var dadosRetorno = await axios.post<number>(
-          "http://localhost:8080/usuarios",
-          usuario
-        );
-
-        if (dadosRetorno.status === 200 || dadosRetorno.status === 201) {
+        const dadosRetorno = await salvarUsuario(usuario);
+        if (dadosRetorno) {
           alert("Usuário foi salvo com sucesso!");
         } else {
-          alert(dadosRetorno.data);
+          alert("Erro ao salvar usuário!");
           return;
         }
       }
 
       router.push("/usuarios");
     } catch (error) {
+      console.error("Erro ao salvar usuário:", error);
       alert("Erro ao salvar usuário!");
     }
   };

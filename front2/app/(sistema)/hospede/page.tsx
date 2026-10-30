@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import axios from "axios";
 import { Hospede } from "@/app/types/hospede";
+import { buscarListaHospedes, deletarHospede } from "@/app/services/hospedeService";
 
 export default function Hospedes() {
   const [hospedes, setHospedes] = useState<Hospede[]>([]);
@@ -14,14 +14,8 @@ export default function Hospedes() {
 
   const carregarDados = async () => {
     try {
-      const token = localStorage.getItem("token");
-
-      const dados = await axios.get<Hospede[]>("http://localhost:8080/hospede", {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      setHospedes(dados.data);
+      const lista = await buscarListaHospedes();
+      setHospedes(lista);
     } catch (error) {
       alert("Erro ao carregar lista de hóspedes!");
     }
@@ -31,25 +25,14 @@ export default function Hospedes() {
     if (!confirm(`Deseja realmente excluir o hóspede ${typeof hospede.nome === 'object' ? (hospede.nome as any).value : hospede.nome}?`)) return;
 
     try {
-      const token = localStorage.getItem("token");
+      const status = await deletarHospede(hospede.id as number);
 
-      const dadosRetorno = await axios.delete(
-        `http://localhost:8080/hospede/${hospede.id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
-
-      if (dadosRetorno.status === 200) {
+      if (status === 200 || status === 204) {
         alert("Excluído com sucesso!");
+        carregarDados();
       } else {
-        alert(dadosRetorno.data);
-        return;
+        alert("Não foi possível excluir o hóspede.");
       }
-
-      carregarDados();
     } catch (error) {
       alert("Erro ao excluir hóspede!");
     }

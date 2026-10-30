@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import axios from "axios";
 import { Quarto } from "@/app/types/quarto";
+import { consultaQuartoPorId } from "@/app/services/quartoService";
 import QuartoForm from "../../components/QuartoForm";
 
 export default function EditarQuarto() {
@@ -20,15 +20,8 @@ export default function EditarQuarto() {
 
   const buscarDados = async () => {
     try {
-      const valorBack = await axios.get<Quarto>(
-        `http://localhost:8080/quarto/${codigo}`
-      );
-
-      if (valorBack.status === 200) {
-        setQuarto(valorBack.data);
-      } else {
-        router.push("/quarto");
-      }
+      const dados = await consultaQuartoPorId(codigo);
+      setQuarto(dados);
     } catch (error) {
       alert("Erro ao buscar dados do quarto!");
       router.push("/quarto");

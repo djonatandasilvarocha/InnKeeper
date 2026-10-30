@@ -32,10 +32,18 @@ export default function QuartoForm({ quartoExistente }: QuartoFormProps) {
 
   const handlerSalvar = async () => {
     try {
+      const token = localStorage.getItem("token");
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      };
+
       if (quartoExistente) {
         const dadosRetorno = await axios.put(
           `http://localhost:8080/quarto/${quarto.id}`,
-          quarto
+          quarto,
+          config
         );
 
         if (dadosRetorno.status === 200) {
@@ -47,7 +55,8 @@ export default function QuartoForm({ quartoExistente }: QuartoFormProps) {
       } else {
         const dadosRetorno = await axios.post(
           "http://localhost:8080/quarto",
-          quarto
+          quarto,
+          config
         );
 
         if (dadosRetorno.status === 200 || dadosRetorno.status === 201) {

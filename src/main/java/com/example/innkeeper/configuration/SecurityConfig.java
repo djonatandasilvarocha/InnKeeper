@@ -1,5 +1,6 @@
 package com.example.innkeeper.configuration;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,23 +27,35 @@ public class SecurityConfig {
         return http.cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(ex -> ex
+                        // Sem autenticação válida -> 401 (em vez do 403 padrão)
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("text/plain;charset=UTF-8");
+                            response.getWriter().println("Token invalido");
+                        })
+                )
                 .authorizeHttpRequests(auth -> auth
+                        // Pré-flight do CORS
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
                         // Rotas Públicas
                         .requestMatchers(
                                 "/auth/login",
                                 "/usuarios/login",
-                                "/usuarios",
                                 "/usuarios/admin",
                                 "/swagger-ui/**",
                                 "/webjars/**",
                                 "/swagger-resources/**",
                                 "/v3/api-docs/**"
                         ).permitAll()
+                        // Cadastro de usuário continua público (GET /usuarios agora exige token)
+                        .requestMatchers(HttpMethod.POST, "/usuarios").permitAll()
 
-                        // Regras de acesso por Roles (3 perfis implementados)
-                        .requestMatchers(HttpMethod.POST, "/quartos/**").hasAnyRole("ADMIN", "FUNCIONARIO")
-                        .requestMatchers(HttpMethod.DELETE, "/quartos/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/hospedes/**").hasAnyRole("ADMIN", "FUNCIONARIO", "HOSPEDE")
+                        // Regras de acesso por Roles (rotas no SINGULAR, como nos controllers)
+                        .requestMatchers(HttpMethod.POST, "/quarto/**").hasAnyRole("ADMIN", "FUNCIONARIO")
+                        .requestMatchers(HttpMethod.DELETE, "/quarto/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/hospede/**").hasAnyRole("ADMIN", "FUNCIONARIO", "HOSPEDE")
 
                         // Qualquer outra rota exige autenticação via Token JWT válido
                         .anyRequest().authenticated()

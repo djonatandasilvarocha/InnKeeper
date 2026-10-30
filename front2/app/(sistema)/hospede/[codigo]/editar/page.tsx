@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import axios from "axios";
 import { Hospede } from "@/app/types/hospede";
+import { consultaHospedePorId } from "@/app/services/hospedeService";
 import HospedeForm from "../../components/HospedeForm";
 
 export default function EditarHospede() {
@@ -20,15 +20,8 @@ export default function EditarHospede() {
 
   const buscarDados = async () => {
     try {
-      const valorBack = await axios.get<Hospede>(
-        `http://localhost:8080/hospede/${codigo}`
-      );
-
-      if (valorBack.status === 200) {
-        setHospede(valorBack.data);
-      } else {
-        router.push("/hospede");
-      }
+      const dados = await consultaHospedePorId(codigo);
+      setHospede(dados);
     } catch (error) {
       alert("Erro ao buscar dados do hóspede!");
       router.push("/hospede");

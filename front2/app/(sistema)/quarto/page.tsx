@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import axios from "axios";
 import { Quarto } from "@/app/types/quarto";
+import { buscarListaQuartos, deletarQuarto } from "@/app/services/quartoService";
 
 export default function Quartos() {
   const [quartos, setQuartos] = useState<Quarto[]>([]);
@@ -14,14 +14,8 @@ export default function Quartos() {
 
   const carregarDados = async () => {
     try {
-      const token = localStorage.getItem("token");
-
-      const dados = await axios.get<Quarto[]>("http://localhost:8080/quarto", {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      setQuartos(dados.data);
+      const lista = await buscarListaQuartos();
+      setQuartos(lista);
     } catch (error) {
       alert("Erro ao carregar lista de quartos!");
     }
@@ -31,25 +25,14 @@ export default function Quartos() {
     if (!confirm(`Deseja realmente excluir o quarto Nº ${quarto.numero}?`)) return;
 
     try {
-      const token = localStorage.getItem("token");
+      const status = await deletarQuarto(quarto.id as number);
 
-      const dadosRetorno = await axios.delete(
-        `http://localhost:8080/quarto/${quarto.id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
-
-      if (dadosRetorno.status === 200 || dadosRetorno.status === 204) {
+      if (status === 200 || status === 204) {
         alert("Excluído com sucesso!");
+        carregarDados();
       } else {
-        alert(dadosRetorno.data);
-        return;
+        alert("Não foi possível excluir o quarto.");
       }
-
-      carregarDados();
     } catch (error) {
       alert("Erro ao excluir quarto!");
     }

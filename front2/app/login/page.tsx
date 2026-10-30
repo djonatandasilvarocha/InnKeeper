@@ -3,38 +3,43 @@
 import { useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
+import { LoginResponse } from "@/app/types/auth";
 
 export default function Login() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [senha, setSenha] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handlerLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handlerLogin = async (formData: FormData) => {
     setLoading(true);
 
     try {
-      const response = await axios.post("http://localhost:8080/auth/login", {
-        email,
-        senha,
-      });
+      const emailTela = formData.get("email")?.toString() ?? "";
+      const senhaTela = formData.get("senha")?.toString() ?? "";
 
-      if (response.status === 200) {
-        // O backend retorna um DTO LoginResponse contendo o token
-        // Vamos capturar independentemente se vier como .token ou direto na raiz
-        const token = response.data?.token || response.data;
+      const loginResposta = await axios.post<LoginResponse>(
+        "http://localhost:8080/auth/login",
+        { email: emailTela, senha: senhaTela }
+      );
+
+      if (loginResposta.status === 200) {
+        // Extrai o token suportando tanto objetos com .token quanto strings diretas
+        const token: string =
+          (loginResposta.data as any)?.token || (loginResposta.data as unknown as string);
 
         if (token) {
+          // Salva no Cookie (padrão do professor) e localStorage (para as suas telas)
+          Cookies.set("token", token, { secure: true, expires: 7 });
           localStorage.setItem("token", token);
-          console.log("Token salvo com sucesso:", token);
+          
           router.push("/home");
         } else {
           alert("Token não encontrado na resposta do servidor.");
         }
+      } else {
+        alert("E-mail ou senha inválidos!");
       }
-    } catch (error: any) {
-      console.error("Erro no login:", error);
+    } catch (error) {
       alert("E-mail ou senha inválidos!");
     } finally {
       setLoading(false);
@@ -69,15 +74,14 @@ export default function Login() {
           </p>
         </div>
 
-        <form onSubmit={handlerLogin} className="space-y-5">
+        <form action={handlerLogin} className="space-y-5">
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
               E-mail
             </label>
             <input
+              name="email"
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
               placeholder="seu@email.com"
               required
               className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all duration-200 text-sm"
@@ -89,9 +93,8 @@ export default function Login() {
               Senha
             </label>
             <input
+              name="senha"
               type="password"
-              value={senha}
-              onChange={(e) => setSenha(e.target.value)}
               placeholder="••••••••"
               required
               className="w-full px-4 py-3 bg-slate-50/80 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all duration-200 text-sm"
@@ -106,7 +109,7 @@ export default function Login() {
             {loading ? "Entrando..." : "Entrar"}
           </button>
         </form>
-      </div>  
+      </div>
     </div>
   );
 }

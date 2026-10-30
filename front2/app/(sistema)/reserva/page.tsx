@@ -2,8 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import axios from "axios";
 import { Reserva } from "@/app/types/reserva";
+import {
+  buscarListaReservas,
+  checkoutReserva,
+  deletarReserva,
+} from "@/app/services/reservaService";
 
 export default function Reservas() {
   const [reservas, setReservas] = useState<Reserva[]>([]);
@@ -14,14 +18,8 @@ export default function Reservas() {
 
   const carregarDados = async () => {
     try {
-      const token = localStorage.getItem("token");
-
-      const dados = await axios.get<Reserva[]>("http://localhost:8080/reserva", {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      setReservas(dados.data);
+      const lista = await buscarListaReservas();
+      setReservas(lista);
     } catch (error) {
       alert("Erro ao carregar lista de reservas!");
     }
@@ -31,19 +29,9 @@ export default function Reservas() {
     if (!confirm(`Deseja realizar o checkout da reserva #${reserva.id}?`)) return;
 
     try {
-      const token = localStorage.getItem("token");
+      const status = await checkoutReserva(reserva.id as number);
 
-      const dadosRetorno = await axios.patch(
-        `http://localhost:8080/reserva/${reserva.id}/checkout`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
-
-      if (dadosRetorno.status === 200) {
+      if (status === 200) {
         alert("Checkout realizado com sucesso!");
         carregarDados();
       } else {
@@ -58,22 +46,13 @@ export default function Reservas() {
     if (!confirm(`Deseja realmente excluir a reserva #${reserva.id}?`)) return;
 
     try {
-      const token = localStorage.getItem("token");
+      const status = await deletarReserva(reserva.id as number);
 
-      const dadosRetorno = await axios.delete(
-        `http://localhost:8080/reserva/${reserva.id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
-
-      if (dadosRetorno.status === 200 || dadosRetorno.status === 204) {
+      if (status === 200 || status === 204) {
         alert("Reserva excluída com sucesso!");
         carregarDados();
       } else {
-        alert(dadosRetorno.data);
+        alert("Não foi possível excluir a reserva.");
       }
     } catch (error) {
       alert("Erro ao excluir reserva!");

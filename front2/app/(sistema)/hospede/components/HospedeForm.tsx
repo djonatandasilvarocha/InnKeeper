@@ -3,8 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import axios from "axios";
 import { Hospede, HospedeFormProps } from "@/app/types/hospede";
+import { salvarHospede, atualizarHospede } from "@/app/services/hospedeService";
 
 export default function HospedeForm({ hospedeExistente }: HospedeFormProps) {
   const router = useRouter();
@@ -33,29 +33,11 @@ export default function HospedeForm({ hospedeExistente }: HospedeFormProps) {
     e.preventDefault(); // Evita o comportamento padrão de recarregar a página
     try {
       if (hospedeExistente) {
-        const dadosRetorno = await axios.put(
-          `http://localhost:8080/hospede/${hospede.id}`,
-          hospede
-        );
-
-        if (dadosRetorno.status === 200) {
-          alert("Hóspede atualizado com sucesso!");
-        } else {
-          alert(dadosRetorno.data);
-          return;
-        }
+        await atualizarHospede(hospede);
+        alert("Hóspede atualizado com sucesso!");
       } else {
-        const dadosRetorno = await axios.post(
-          "http://localhost:8080/hospede",
-          hospede
-        );
-
-        if (dadosRetorno.status === 200 || dadosRetorno.status === 201) {
-          alert("Hóspede cadastrado com sucesso!");
-        } else {
-          alert(dadosRetorno.data);
-          return;
-        }
+        await salvarHospede(hospede);
+        alert("Hóspede cadastrado com sucesso!");
       }
 
       router.push("/hospede");

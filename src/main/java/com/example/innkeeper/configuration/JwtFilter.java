@@ -25,50 +25,44 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String uri = request.getRequestURI();
 
-        // Rotas públicas ou que não devem ser barradas diretamente pelo filtro
-        if(uri.startsWith("/swagger-ui")
+        // Apenas rotas realmente públicas (o filtro nem tenta ler o token nelas)
+        if (uri.startsWith("/swagger-ui")
                 || uri.startsWith("/v2/api-docs")
                 || uri.startsWith("/v3/api-docs")
                 || uri.startsWith("/swagger-resources")
-                || uri.startsWith("webjars")
+                || uri.startsWith("/webjars")
                 || uri.startsWith("/auth/login")
-                || uri.startsWith("/usuarios")
-                || uri.startsWith("/hospede")
-                || uri.startsWith("/quarto")
-                || uri.startsWith("/reserva")
-        ){
-            filterChain.doFilter(request,response);
+                || uri.startsWith("/usuarios/login")
+                || uri.startsWith("/usuarios/admin")
+        ) {
+            filterChain.doFilter(request, response);
             return;
         }
 
         String authHeader = request.getHeader("Authorization");
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.replace("Bearer ", "");
+            String token = authHeader.substring(7);
 
             try {
                 // Valida o token e retorna o UsuarioLogado
                 var usuarioLogado = tokenService.verificarToken(token);
 
-                var user = new UsernamePasswordAuthenticationToken(
+                var authentication = new UsernamePasswordAuthenticationToken(
                         usuarioLogado,
                         null,
                         usuarioLogado.authorities()
                 );
 
-                SecurityContextHolder.getContext().setAuthentication(user);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
 
             } catch (Exception e) {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.getWriter().println("Token invalido");
-                return;
+                // Token inválido/expirado: não autentica e segue a cadeia.
+                // O SecurityConfig decide: rota pública passa, rota protegida responde 401.
+                SecurityContextHolder.clearContext();
             }
-
-        } else {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().println("Token invalido");
-            return;
         }
+        // Sem token: também segue a cadeia e o SecurityConfig decide.
 
         filterChain.doFilter(request, response);
     }

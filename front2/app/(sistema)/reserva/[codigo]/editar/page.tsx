@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import axios from "axios";
 import { Reserva } from "@/app/types/reserva";
+import { consultaReservaPorId } from "@/app/services/reservaService";
 import ReservaForm from "../../components/ReservaForm";
 
 export default function EditarReserva() {
@@ -20,15 +20,8 @@ export default function EditarReserva() {
 
   const buscarDados = async () => {
     try {
-      const valorBack = await axios.get<Reserva>(
-        `http://localhost:8080/reserva/${codigo}`
-      );
-
-      if (valorBack.status === 200) {
-        setReserva(valorBack.data);
-      } else {
-        router.push("/reserva");
-      }
+      const dados = await consultaReservaPorId(codigo);
+      setReserva(dados);
     } catch (error) {
       alert("Erro ao buscar dados da reserva!");
       router.push("/reserva");

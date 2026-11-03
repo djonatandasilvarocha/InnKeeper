@@ -3,10 +3,12 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import axios from "axios";
 import { Reserva, ReservaFormProps, EnumStatusReserva } from "@/app/types/reserva";
 import { Hospede } from "@/app/types/hospede";
 import { Quarto } from "@/app/types/quarto";
+import { buscarListaHospedes } from "@/app/services/hospedeService";
+import { buscarListaQuartos } from "@/app/services/quartoService";
+import { salvarReserva, atualizarReserva } from "@/app/services/reservaService";
 
 export default function ReservaForm({ reservaExistente }: ReservaFormProps) {
   const router = useRouter();
@@ -25,13 +27,13 @@ export default function ReservaForm({ reservaExistente }: ReservaFormProps) {
 
   const carregarOpcoes = async () => {
     try {
-      const [resHospedes, resQuartos] = await Promise.all([
-        axios.get<Hospede[]>("http://localhost:8080/hospede"),
-        axios.get<Quarto[]>("http://localhost:8080/quarto"),
+      const [listaHospedes, listaQuartos] = await Promise.all([
+        buscarListaHospedes(),
+        buscarListaQuartos(),
       ]);
 
-      setHospedes(resHospedes.data);
-      setQuartos(resQuartos.data);
+      setHospedes(listaHospedes);
+      setQuartos(listaQuartos);
     } catch (error) {
       alert("Erro ao carregar lista de hóspedes e quartos!");
     }
@@ -41,32 +43,15 @@ export default function ReservaForm({ reservaExistente }: ReservaFormProps) {
     e.preventDefault();
     try {
       if (reservaExistente) {
-        const dadosRetorno = await axios.put(
-          `http://localhost:8080/reserva/${reserva.id}`,
-          reserva
-        );
-
-        if (dadosRetorno.status === 200) {
-          alert("Reserva atualizada com sucesso!");
-        } else {
-          alert(dadosRetorno.data);
-          return;
-        }
+        await atualizarReserva(reserva);
+        alert("Reserva atualizada com sucesso!");
       } else {
-        const dadosRetorno = await axios.post(
-          "http://localhost:8080/reserva",
-          reserva
-        );
-
-        if (dadosRetorno.status === 200 || dadosRetorno.status === 201) {
-          alert("Reserva realizada com sucesso!");
-        } else {
-          alert(dadosRetorno.data);
-          return;
-        }
+        await salvarReserva(reserva);
+        alert("Reserva realizada com sucesso!");
       }
 
       router.push("/reserva");
+      router.refresh();
     } catch (error) {
       alert("Erro ao salvar reserva!");
     }

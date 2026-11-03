@@ -3,8 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import axios from "axios";
 import { Quarto, QuartoFormProps } from "@/app/types/quarto";
+import { salvarQuarto, atualizarQuarto } from "@/app/services/quartoService";
 
 export default function QuartoForm({ quartoExistente }: QuartoFormProps) {
   const router = useRouter();
@@ -30,44 +30,19 @@ export default function QuartoForm({ quartoExistente }: QuartoFormProps) {
     );
   };
 
-  const handlerSalvar = async () => {
+  const handlerSalvar = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     try {
-      const token = localStorage.getItem("token");
-      const config = {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      };
-
       if (quartoExistente) {
-        const dadosRetorno = await axios.put(
-          `http://localhost:8080/quarto/${quarto.id}`,
-          quarto,
-          config
-        );
-
-        if (dadosRetorno.status === 200) {
-          alert("Quarto atualizado com sucesso!");
-        } else {
-          alert(dadosRetorno.data);
-          return;
-        }
+        await atualizarQuarto(quarto);
+        alert("Quarto atualizado com sucesso!");
       } else {
-        const dadosRetorno = await axios.post(
-          "http://localhost:8080/quarto",
-          quarto,
-          config
-        );
-
-        if (dadosRetorno.status === 200 || dadosRetorno.status === 201) {
-          alert("Quarto cadastrado com sucesso!");
-        } else {
-          alert(dadosRetorno.data);
-          return;
-        }
+        await salvarQuarto(quarto);
+        alert("Quarto cadastrado com sucesso!");
       }
 
       router.push("/quarto");
+      router.refresh();
     } catch (error) {
       alert("Erro ao salvar quarto!");
     }
@@ -75,7 +50,7 @@ export default function QuartoForm({ quartoExistente }: QuartoFormProps) {
 
   return (
     <form
-      action={handlerSalvar}
+      onSubmit={handlerSalvar}
       className="w-full max-w-2xl mx-auto bg-[#0b1120] border border-slate-800 rounded-xl p-8 shadow-2xl"
     >
       <div className="space-y-6">

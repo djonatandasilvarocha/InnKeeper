@@ -1,3 +1,4 @@
+
 package com.example.innkeeper.application.service;
 
 import com.example.innkeeper.application.DTOs.*;
@@ -24,11 +25,23 @@ public class UsuarioService {
     private String secret;
 
     public LoginResponse validarUsuarioAutenticadoRetornaToken(LoginRequest request) {
-        if (usuarioRepository.existsUsuarioByEmailAndSenha(request.email(), request.senha())) {
-            var token = tokenService.gerarToken(request);
-            return new LoginResponse(token);
+
+        var usuario = usuarioRepository.findByEmail(request.email())
+                .orElse(null);
+
+        if (usuario == null || !usuario.getSenha().equals(request.senha())) {
+            return null;
         }
-        return null;
+
+        if (usuario.getStatus() != EnumStatusUsuario.ATIVO) {
+            return null;
+        }
+
+        var token = tokenService.gerarToken(request);
+
+        var usuarioResponse = new UsuarioResponse(usuario);
+
+        return new LoginResponse(token, usuarioResponse);
     }
 
     public List<UsuarioResponse> listarTodosUsuariosTable() {
@@ -46,17 +59,23 @@ public class UsuarioService {
         Usuario usuarioAdminSalvar = new Usuario(criarAdminRequest);
         usuarioRepository.save(usuarioAdminSalvar);
 
-        return new CriarAdminResponse(usuarioAdminSalvar.getId(), "Usuário salvo com sucesso!");
+        return new CriarAdminResponse(
+                usuarioAdminSalvar.getId(),
+                "Usuário salvo com sucesso!"
+        );
     }
 
     public UsuarioLogado getUsuarioLogado() {
-        return (UsuarioLogado) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return (UsuarioLogado) SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getPrincipal();
     }
 
     public UsuarioResponse salvarUsuario(CriarUsuarioRequest usuario, Long id) {
         var usuarioLogado = getUsuarioLogado();
 
-        // Novo Usuário
+        // Novo usuário
         if (id == 0L) {
             Usuario usuarioBanco = new Usuario();
             usuarioBanco.setNome(usuario.nome());
@@ -65,16 +84,21 @@ public class UsuarioService {
             usuarioBanco.setSenha(usuario.senha());
 
             usuarioRepository.save(usuarioBanco);
+
             return new UsuarioResponse(usuarioBanco);
+
         } else {
             // Usuário existente
             Usuario usuarioBanco = usuarioRepository.findById(id).orElse(null);
+
             if (usuarioBanco != null) {
                 usuarioBanco.setNome(usuario.nome());
                 usuarioBanco.setCpf(usuario.cpf());
                 usuarioBanco.setEmail(usuario.email());
                 usuarioBanco.setSenha(usuario.senha());
+
                 usuarioRepository.save(usuarioBanco);
+
                 return new UsuarioResponse(usuarioBanco);
             }
         }
@@ -84,19 +108,23 @@ public class UsuarioService {
 
     public UsuarioResponse buscarPorId(Long id) {
         var usuario = usuarioRepository.findById(id).orElse(null);
+
         if (usuario == null) {
             return null;
         }
+
         return new UsuarioResponse(usuario);
     }
 
     public boolean atualizarStatus(EnumStatusUsuario status, Long id) {
         Usuario usuarioBanco = usuarioRepository.findById(id).orElse(null);
+
         if (usuarioBanco != null) {
             usuarioBanco.setStatus(status);
             usuarioRepository.save(usuarioBanco);
             return true;
         }
+
         return false;
     }
 }

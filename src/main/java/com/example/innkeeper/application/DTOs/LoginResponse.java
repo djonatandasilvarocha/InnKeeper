@@ -1,4 +1,7 @@
 package com.example.innkeeper.application.DTOs;
 
-public record LoginResponse(String token) {
+public record LoginResponse(
+        String token,
+        UsuarioResponse usuario
+) {
 }

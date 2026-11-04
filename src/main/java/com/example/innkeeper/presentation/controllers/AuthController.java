@@ -2,16 +2,14 @@ package com.example.innkeeper.presentation.controllers;
 
 import com.example.innkeeper.application.DTOs.LoginRequest;
 import com.example.innkeeper.application.DTOs.LoginResponse;
+import com.example.innkeeper.application.DTOs.UsuarioResponse;
 import com.example.innkeeper.application.service.TokenService;
 import com.example.innkeeper.domain.repository.UsuarioRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
@@ -28,12 +26,23 @@ public class AuthController {
     @Operation(description = "Método de login", summary = "Autenticação de usuarios")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
 
-        if (usuarioRepository.existsUsuarioByEmailAndSenha(loginRequest.email(), loginRequest.senha())) {
-            // Gera o Token salvando no banco e o retorna
-            var token = tokenService.gerarToken(loginRequest);
+        var usuario = usuarioRepository.findByEmail(loginRequest.email())
+                .orElse(null);
 
-            return ResponseEntity.ok(new LoginResponse(token));
+        if (usuario == null || !usuario.getSenha().equals(loginRequest.senha())) {
+            return ResponseEntity.badRequest().body("Usuario ou senha invalido!");
         }
-        return ResponseEntity.badRequest().body("Usuario ou senha invalido!");
+
+        if (usuario.getStatus() != com.example.innkeeper.domain.entities.EnumStatusUsuario.ATIVO) {
+            return ResponseEntity.badRequest().body("Usuário não está ativo!");
+        }
+
+        var token = tokenService.gerarToken(loginRequest);
+
+        var usuarioResponse = new UsuarioResponse(usuario);
+
+        return ResponseEntity.ok(
+                new LoginResponse(token, usuarioResponse)
+        );
     }
 }

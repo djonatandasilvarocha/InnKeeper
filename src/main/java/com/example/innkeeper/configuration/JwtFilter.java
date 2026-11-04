@@ -1,3 +1,4 @@
+
 package com.example.innkeeper.configuration;
 
 import com.example.innkeeper.application.service.TokenService;
@@ -20,12 +21,18 @@ public class JwtFilter extends OncePerRequestFilter {
     private TokenService tokenService;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-            throws ServletException, IOException {
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain
+    ) throws ServletException, IOException {
 
         String uri = request.getRequestURI();
 
-        // Apenas rotas realmente públicas (o filtro nem tenta ler o token nelas)
+        // Exibe a rota recebida no console do IntelliJ
+        System.out.println("URI RECEBIDA: " + uri);
+
+        // Rotas públicas: não precisam de token JWT
         if (uri.startsWith("/swagger-ui")
                 || uri.startsWith("/v2/api-docs")
                 || uri.startsWith("/v3/api-docs")
@@ -33,19 +40,22 @@ public class JwtFilter extends OncePerRequestFilter {
                 || uri.startsWith("/webjars")
                 || uri.startsWith("/auth/login")
                 || uri.startsWith("/usuarios/login")
-                || uri.startsWith("/usuarios/admin")
-        ) {
+                || uri.startsWith("/usuarios/admin")) {
+
             filterChain.doFilter(request, response);
             return;
         }
 
+        // Recupera o cabeçalho Authorization
         String authHeader = request.getHeader("Authorization");
 
+        // Verifica se existe um token Bearer
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
+
             String token = authHeader.substring(7);
 
             try {
-                // Valida o token e retorna o UsuarioLogado
+                // Valida o token e recupera o usuário
                 var usuarioLogado = tokenService.verificarToken(token);
 
                 var authentication = new UsernamePasswordAuthenticationToken(
@@ -54,16 +64,19 @@ public class JwtFilter extends OncePerRequestFilter {
                         usuarioLogado.authorities()
                 );
 
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                SecurityContextHolder.getContext()
+                        .setAuthentication(authentication);
 
             } catch (Exception e) {
-                // Token inválido/expirado: não autentica e segue a cadeia.
-                // O SecurityConfig decide: rota pública passa, rota protegida responde 401.
+
+                // Token inválido ou expirado
                 SecurityContextHolder.clearContext();
+
+                System.out.println("ERRO AO VALIDAR TOKEN: " + e.getMessage());
             }
         }
-        // Sem token: também segue a cadeia e o SecurityConfig decide.
 
+        // Continua a execução para o SecurityConfig decidir o acesso
         filterChain.doFilter(request, response);
     }
 }

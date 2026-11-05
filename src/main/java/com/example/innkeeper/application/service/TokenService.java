@@ -38,9 +38,8 @@ public class TokenService {
     public String gerarToken(LoginRequest loginRequestDto) {
         Algorithm algorithm = Algorithm.HMAC256(secret);
 
-        var usuario = usuarioRepository.findAll()
-                .stream().filter(u -> u.getEmail().equals(loginRequestDto.email()))
-                .findFirst().orElse(null);
+        var usuario = usuarioRepository.findByEmail(loginRequestDto.email())
+                .orElse(null);
 
         String token = JWT.create()
                 .withIssuer(emissor)

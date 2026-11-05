@@ -1,3 +1,4 @@
+
 package com.example.innkeeper.application.service;
 
 import com.example.innkeeper.application.DTOs.AtualizarHospedeRequest;
@@ -24,116 +25,180 @@ public class HospedeService {
         this.hospedeRepository = hospedeRepository;
     }
 
-    // --- MÉTODOS DE LEITURA ---
+    // MÉTODOS DE LEITURA
 
     public List<HospedeResponse> listarTodosDto() {
-        return hospedeRepository.findAll().stream()
+        return hospedeRepository.findByStatusNot(EnumStatusHospede.EXCLUIDO)
+                .stream()
                 .map(this::converterParaResponse)
                 .collect(Collectors.toList());
     }
 
     public HospedeResponse buscarPorIdDto(Long id) {
-        return hospedeRepository.findById(id)
+        return hospedeRepository
+                .findByIdAndStatusNot(id, EnumStatusHospede.EXCLUIDO)
                 .map(this::converterParaResponse)
                 .orElse(null);
     }
 
     public boolean existePorId(Long id) {
-        return hospedeRepository.existsById(id);
+        return hospedeRepository
+                .findByIdAndStatusNot(id, EnumStatusHospede.EXCLUIDO)
+                .isPresent();
     }
 
-    // --- MÉTODOS DE CRIAÇÃO E ATUALIZAÇÃO ---
+    // MÉTODO DE CRIAÇÃO
 
     public HospedeResponse criar(CriarHospedeRequest request) {
-        Hospede hospede = new Hospede();
-        hospede.setNome(request.nome());
 
-        if (request.cpf() != null) {
-            hospede.setCpf(new Cpf(request.cpf()));
+        if (request.cpf() == null || request.email() == null) {
+            throw new IllegalArgumentException(
+                    "CPF e e-mail são obrigatórios."
+            );
         }
-        if (request.email() != null) {
-            hospede.setEmail(new Email(request.email()));
-        }
+
+        Hospede hospede = new Hospede();
+
+        hospede.setNome(request.nome());
+        hospede.setCpf(new Cpf(request.cpf()));
+        hospede.setEmail(new Email(request.email()));
+
         if (request.telefone() != null) {
-            hospede.setTelefone(new Celular(request.telefone())); // Ou Telefone, conforme sua classe
+            hospede.setTelefone(new Celular(request.telefone()));
         }
 
         hospede.setStatus(EnumStatusHospede.ATIVO);
 
         Hospede salvo = hospedeRepository.save(hospede);
+
         return converterParaResponse(salvo);
     }
 
-    public HospedeResponse atualizarDto(Long id, AtualizarHospedeRequest request) {
-        Optional<Hospede> hospedeBanco = hospedeRepository.findById(id);
+    // MÉTODO DE ATUALIZAÇÃO COMPLETA
+
+    public HospedeResponse atualizarDto(
+            Long id,
+            AtualizarHospedeRequest request
+    ) {
+
+        Optional<Hospede> hospedeBanco =
+                hospedeRepository.findByIdAndStatusNot(
+                        id,
+                        EnumStatusHospede.EXCLUIDO
+                );
+
         if (hospedeBanco.isPresent()) {
+
             Hospede hospede = hospedeBanco.get();
 
-            hospede.setNome(request.nome());
+            if (request.nome() == null ||
+                    request.cpf() == null ||
+                    request.email() == null) {
+                throw new IllegalArgumentException(
+                        "Nome, CPF e e-mail são obrigatórios."
+                );
+            }
 
-            if (request.cpf() != null) {
-                hospede.setCpf(new Cpf(request.cpf()));
-            }
-            if (request.email() != null) {
-                hospede.setEmail(new Email(request.email()));
-            }
+            hospede.setNome(request.nome());
+            hospede.setCpf(new Cpf(request.cpf()));
+            hospede.setEmail(new Email(request.email()));
+
             if (request.telefone() != null) {
                 hospede.setTelefone(new Celular(request.telefone()));
             }
+
             if (request.status() != null) {
                 hospede.setStatus(request.status());
             }
 
             Hospede atualizado = hospedeRepository.save(hospede);
+
             return converterParaResponse(atualizado);
         }
+
         return null;
     }
 
-    public HospedeResponse atualizarParcialDto(Long id, AtualizarHospedeRequest request) {
-        Optional<Hospede> hospedeBanco = hospedeRepository.findById(id);
+    // MÉTODO DE ATUALIZAÇÃO PARCIAL
+
+    public HospedeResponse atualizarParcialDto(
+            Long id,
+            AtualizarHospedeRequest request
+    ) {
+
+        Optional<Hospede> hospedeBanco =
+                hospedeRepository.findByIdAndStatusNot(
+                        id,
+                        EnumStatusHospede.EXCLUIDO
+                );
+
         if (hospedeBanco.isPresent()) {
+
             Hospede hospede = hospedeBanco.get();
 
             if (request.nome() != null) {
                 hospede.setNome(request.nome());
             }
+
             if (request.cpf() != null) {
                 hospede.setCpf(new Cpf(request.cpf()));
             }
+
             if (request.email() != null) {
                 hospede.setEmail(new Email(request.email()));
             }
+
             if (request.telefone() != null) {
                 hospede.setTelefone(new Celular(request.telefone()));
             }
+
             if (request.status() != null) {
                 hospede.setStatus(request.status());
             }
 
             Hospede atualizado = hospedeRepository.save(hospede);
+
             return converterParaResponse(atualizado);
         }
+
         return null;
     }
 
+    // MÉTODO DE EXCLUSÃO LÓGICA
+
     public boolean deletarPorId(Long id) {
-        if (hospedeRepository.existsById(id)) {
-            hospedeRepository.deleteById(id);
+
+        Optional<Hospede> hospedeBanco =
+                hospedeRepository.findByIdAndStatusNot(
+                        id,
+                        EnumStatusHospede.EXCLUIDO
+                );
+
+        if (hospedeBanco.isPresent()) {
+
+            Hospede hospede = hospedeBanco.get();
+
+            hospede.setStatus(EnumStatusHospede.EXCLUIDO);
+
+            hospedeRepository.save(hospede);
+
             return true;
         }
+
         return false;
     }
 
-    // --- MAPPING PRIVADO DE ENTIDADE PARA DTO ---
+    // CONVERSÃO DE ENTIDADE PARA DTO
 
     private HospedeResponse converterParaResponse(Hospede hospede) {
+
         return new HospedeResponse(
                 hospede.getId(),
                 hospede.getNome() != null ? hospede.getNome() : "",
                 hospede.getCpf() != null ? hospede.getCpf().value() : "",
                 hospede.getEmail() != null ? hospede.getEmail().value() : "",
-                hospede.getTelefone() != null ? hospede.getTelefone().value() : ""
+                hospede.getTelefone() != null ? hospede.getTelefone().value() : "",
+                hospede.getStatus()
         );
     }
 }

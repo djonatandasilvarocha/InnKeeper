@@ -52,11 +52,13 @@ public class UsuarioService {
     }
 
     public CriarAdminResponse criarAdmin(CriarAdminRequest criarAdminRequest) {
+
         if (!criarAdminRequest.secretKey().equals(secret)) {
             return new CriarAdminResponse(0L, "Chave secreta inválida!");
         }
 
         Usuario usuarioAdminSalvar = new Usuario(criarAdminRequest);
+
         usuarioRepository.save(usuarioAdminSalvar);
 
         return new CriarAdminResponse(
@@ -73,11 +75,12 @@ public class UsuarioService {
     }
 
     public UsuarioResponse salvarUsuario(CriarUsuarioRequest usuario, Long id) {
-        var usuarioLogado = getUsuarioLogado();
 
         // Novo usuário
         if (id == 0L) {
+
             Usuario usuarioBanco = new Usuario();
+
             usuarioBanco.setNome(usuario.nome());
             usuarioBanco.setCpf(usuario.cpf());
             usuarioBanco.setEmail(usuario.email());
@@ -88,10 +91,13 @@ public class UsuarioService {
             return new UsuarioResponse(usuarioBanco);
 
         } else {
+
             // Usuário existente
-            Usuario usuarioBanco = usuarioRepository.findById(id).orElse(null);
+            Usuario usuarioBanco = usuarioRepository.findById(id)
+                    .orElse(null);
 
             if (usuarioBanco != null) {
+
                 usuarioBanco.setNome(usuario.nome());
                 usuarioBanco.setCpf(usuario.cpf());
                 usuarioBanco.setEmail(usuario.email());
@@ -107,7 +113,9 @@ public class UsuarioService {
     }
 
     public UsuarioResponse buscarPorId(Long id) {
-        var usuario = usuarioRepository.findById(id).orElse(null);
+
+        var usuario = usuarioRepository.findById(id)
+                .orElse(null);
 
         if (usuario == null) {
             return null;
@@ -117,11 +125,16 @@ public class UsuarioService {
     }
 
     public boolean atualizarStatus(EnumStatusUsuario status, Long id) {
-        Usuario usuarioBanco = usuarioRepository.findById(id).orElse(null);
+
+        Usuario usuarioBanco = usuarioRepository.findById(id)
+                .orElse(null);
 
         if (usuarioBanco != null) {
+
             usuarioBanco.setStatus(status);
+
             usuarioRepository.save(usuarioBanco);
+
             return true;
         }
 

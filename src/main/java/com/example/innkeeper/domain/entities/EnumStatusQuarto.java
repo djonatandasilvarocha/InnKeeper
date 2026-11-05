@@ -5,5 +5,6 @@ public enum EnumStatusQuarto {
     DISPONIVEL,
     OCUPADO,
     MANUTENCAO,
-    INATIVO
+    INATIVO,
+    EXCLUIDO
 }

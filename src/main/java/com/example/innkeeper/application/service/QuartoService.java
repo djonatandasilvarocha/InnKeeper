@@ -1,3 +1,4 @@
+
 package com.example.innkeeper.application.service;
 
 import com.example.innkeeper.application.DTOs.AtualizarQuartoRequest;
@@ -20,90 +21,153 @@ public class QuartoService {
         this.quartoRepository = quartoRepository;
     }
 
-    // --- MÉTODOS DE LEITURA (Retornam DTOs) ---
+    // MÉTODOS DE LEITURA
 
     public List<QuartoResponse> listarTodosDto() {
-        return quartoRepository.findAll()
+        return quartoRepository
+                .findByStatusNot(EnumStatusQuarto.EXCLUIDO)
                 .stream()
                 .map(QuartoResponse::new)
                 .toList();
     }
 
     public QuartoResponse buscarPorIdDto(Long id) {
-        return quartoRepository.findById(id)
+        return quartoRepository
+                .findByIdAndStatusNot(
+                        id,
+                        EnumStatusQuarto.EXCLUIDO
+                )
                 .map(QuartoResponse::new)
                 .orElse(null);
     }
 
     public boolean existePorId(Long id) {
-        return quartoRepository.existsById(id);
+        return quartoRepository
+                .findByIdAndStatusNot(
+                        id,
+                        EnumStatusQuarto.EXCLUIDO
+                )
+                .isPresent();
     }
 
-    // --- MÉTODOS DE ESCRITA E ATUALIZAÇÃO (Recebem DTOs e retornam Response DTO) ---
+    // MÉTODO DE CRIAÇÃO
 
     public QuartoResponse criar(CriarQuartoRequest request) {
+
         Quarto quarto = new Quarto();
+
         quarto.setNumero(request.numero());
         quarto.setTipo(request.tipo());
         quarto.setCapacidade(request.capacidade());
         quarto.setDiaria(request.diaria());
-        quarto.setStatus(EnumStatusQuarto.DISPONIVEL); // Status inicial padrão
+
+        quarto.setStatus(EnumStatusQuarto.DISPONIVEL);
 
         Quarto salvo = quartoRepository.save(quarto);
+
         return new QuartoResponse(salvo);
     }
 
-    public QuartoResponse atualizarDto(Long id, AtualizarQuartoRequest request) {
-        Optional<Quarto> quartoBanco = quartoRepository.findById(id);
+    // MÉTODO DE ATUALIZAÇÃO COMPLETA
+
+    public QuartoResponse atualizarDto(
+            Long id,
+            AtualizarQuartoRequest request
+    ) {
+
+        Optional<Quarto> quartoBanco =
+                quartoRepository.findByIdAndStatusNot(
+                        id,
+                        EnumStatusQuarto.EXCLUIDO
+                );
+
         if (quartoBanco.isPresent()) {
+
             Quarto quarto = quartoBanco.get();
 
             quarto.setNumero(request.numero());
             quarto.setTipo(request.tipo());
             quarto.setCapacidade(request.capacidade());
             quarto.setDiaria(request.diaria());
+
             if (request.status() != null) {
                 quarto.setStatus(request.status());
             }
 
             Quarto atualizado = quartoRepository.save(quarto);
+
             return new QuartoResponse(atualizado);
         }
+
         return null;
     }
 
-    public QuartoResponse atualizarParcialDto(Long id, AtualizarQuartoRequest request) {
-        Optional<Quarto> quartoBanco = quartoRepository.findById(id);
+    // MÉTODO DE ATUALIZAÇÃO PARCIAL
+
+    public QuartoResponse atualizarParcialDto(
+            Long id,
+            AtualizarQuartoRequest request
+    ) {
+
+        Optional<Quarto> quartoBanco =
+                quartoRepository.findByIdAndStatusNot(
+                        id,
+                        EnumStatusQuarto.EXCLUIDO
+                );
+
         if (quartoBanco.isPresent()) {
+
             Quarto quarto = quartoBanco.get();
 
             if (request.numero() != null) {
                 quarto.setNumero(request.numero());
             }
+
             if (request.tipo() != null) {
                 quarto.setTipo(request.tipo());
             }
+
             if (request.capacidade() != null) {
                 quarto.setCapacidade(request.capacidade());
             }
+
             if (request.diaria() != null) {
                 quarto.setDiaria(request.diaria());
             }
+
             if (request.status() != null) {
                 quarto.setStatus(request.status());
             }
 
             Quarto atualizado = quartoRepository.save(quarto);
+
             return new QuartoResponse(atualizado);
         }
+
         return null;
     }
 
+    // MÉTODO DE EXCLUSÃO LÓGICA
+
     public boolean deletarPorId(Long id) {
-        if (quartoRepository.existsById(id)) {
-            quartoRepository.deleteById(id);
+
+        Optional<Quarto> quartoBanco =
+                quartoRepository.findByIdAndStatusNot(
+                        id,
+                        EnumStatusQuarto.EXCLUIDO
+                );
+
+        if (quartoBanco.isPresent()) {
+
+            Quarto quarto = quartoBanco.get();
+
+            quarto.setStatus(EnumStatusQuarto.EXCLUIDO);
+
+            quartoRepository.save(quarto);
+
             return true;
         }
+
         return false;
     }
 }

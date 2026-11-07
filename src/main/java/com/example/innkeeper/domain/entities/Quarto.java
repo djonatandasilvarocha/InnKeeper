@@ -1,3 +1,4 @@
+
 package com.example.innkeeper.domain.entities;
 
 import jakarta.persistence.*;
@@ -8,7 +9,7 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "quarto") // Nome exato da sua tabela no PostgreSQL
+@Table(name = "quarto")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -28,4 +29,8 @@ public class Quarto {
 
     @Enumerated(EnumType.STRING)
     private EnumStatusQuarto status;
+
+    @ManyToOne
+    @JoinColumn(name = "usuario_id")
+    private Usuario usuario;
 }

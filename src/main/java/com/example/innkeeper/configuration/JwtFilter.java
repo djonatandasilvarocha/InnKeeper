@@ -67,12 +67,18 @@ public class JwtFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext()
                         .setAuthentication(authentication);
 
+                System.out.println("TOKEN VALIDADO COM SUCESSO!");
+
             } catch (Exception e) {
 
                 // Token inválido ou expirado
                 SecurityContextHolder.clearContext();
 
-                System.out.println("ERRO AO VALIDAR TOKEN: " + e.getMessage());
+                // Exibe o erro completo no console
+                System.out.println("ERRO AO VALIDAR TOKEN:");
+                System.out.println("Mensagem: " + e.getMessage());
+
+                e.printStackTrace();
             }
         }
 

@@ -1,3 +1,4 @@
+
 package com.example.innkeeper.domain.repository;
 
 import com.example.innkeeper.domain.entities.Hospede;
@@ -11,7 +12,16 @@ import java.util.Optional;
 @Repository
 public interface HospedeRepository extends JpaRepository<Hospede, Long> {
 
-    List<Hospede> findByStatusNot(EnumStatusHospede status);
+    // Buscar hóspedes de um usuário específico
+    List<Hospede> findByUsuario_IdAndStatusNot(
+            Long usuarioId,
+            EnumStatusHospede status
+    );
 
-    Optional<Hospede> findByIdAndStatusNot(Long id, EnumStatusHospede status);
+    // Buscar um hóspede específico pertencente a um usuário
+    Optional<Hospede> findByIdAndUsuario_IdAndStatusNot(
+            Long id,
+            Long usuarioId,
+            EnumStatusHospede status
+    );
 }

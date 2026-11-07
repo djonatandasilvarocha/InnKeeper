@@ -1,3 +1,4 @@
+
 package com.example.innkeeper.presentation.controllers;
 
 import com.example.innkeeper.application.DTOs.AtualizarReservaRequest;
@@ -7,6 +8,7 @@ import com.example.innkeeper.application.service.ReservaService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,92 +29,176 @@ public class ReservaController {
         this.reservaService = reservaService;
     }
 
+    // ==========================================
+    // LISTAR RESERVAS
+    // ==========================================
+
     @GetMapping
     @Operation(
             summary = "Listar reservas",
-            description = "Retorna todas as reservas cadastradas no sistema."
+            description = "Retorna as reservas pertencentes ao usuário autenticado."
     )
     public ResponseEntity<List<ReservaResponse>> listarTodas() {
+
         return ResponseEntity.ok(reservaService.listarTodasDto());
     }
+
+    // ==========================================
+    // BUSCAR RESERVA POR ID
+    // ==========================================
 
     @GetMapping("/{id}")
     @Operation(
             summary = "Buscar reserva por id",
-            description = "Retorna uma reserva específica através do seu id."
+            description = "Retorna uma reserva específica pertencente ao usuário autenticado."
     )
     public ResponseEntity<ReservaResponse> buscarPorId(@PathVariable Long id) {
-        ReservaResponse response = reservaService.buscarPorIdDto(id);
-        if (response != null) {
-            return ResponseEntity.ok(response);
-        }
-        return ResponseEntity.notFound().build();
+
+        return reservaService.buscarPorIdDto(id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    // ==========================================
+    // CRIAR RESERVA
+    // ==========================================
+
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
     @Operation(
             summary = "Criar reserva",
             description = "Efetua a criação de uma nova reserva."
     )
-    public ResponseEntity<ReservaResponse> criar(@RequestBody CriarReservaRequest request) {
-        ReservaResponse response = reservaService.criar(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    public ResponseEntity<?> criar(
+            @RequestBody CriarReservaRequest request
+    ) {
+
+        try {
+
+            ReservaResponse response = reservaService.criar(request);
+
+            return ResponseEntity
+                    .status(HttpStatus.CREATED)
+                    .body(response);
+
+        } catch (IllegalArgumentException e) {
+
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
+
+    // ==========================================
+    // ATUALIZAR RESERVA COMPLETA
+    // ==========================================
 
     @PutMapping("/{id}")
     @Operation(
             summary = "Atualizar reserva",
-            description = "Atualiza todos os dados de uma reserva existente."
+            description = "Atualiza os dados de uma reserva existente."
     )
-    public ResponseEntity<ReservaResponse> atualizar(@PathVariable Long id, @RequestBody AtualizarReservaRequest request) {
-        ReservaResponse response = reservaService.atualizarDto(id, request);
-        if (response != null) {
+    public ResponseEntity<?> atualizar(
+            @PathVariable Long id,
+            @RequestBody AtualizarReservaRequest request
+    ) {
+
+        try {
+
+            ReservaResponse response = reservaService.atualizarDto(id, request);
+
             return ResponseEntity.ok(response);
+
+        } catch (IllegalArgumentException e) {
+
+            if ("Reserva não encontrada.".equals(e.getMessage())) {
+                return ResponseEntity.notFound().build();
+            }
+
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
-        return ResponseEntity.notFound().build();
     }
+
+    // ==========================================
+    // ATUALIZAÇÃO PARCIAL
+    // ==========================================
 
     @PatchMapping("/{id}")
     @Operation(
             summary = "Atualizar reserva parcialmente",
             description = "Atualiza apenas os campos informados de uma reserva existente."
     )
-    public ResponseEntity<ReservaResponse> atualizarParcial(@PathVariable Long id, @RequestBody AtualizarReservaRequest request) {
-        ReservaResponse response = reservaService.atualizarParcialDto(id, request);
-        if (response != null) {
+    public ResponseEntity<?> atualizarParcial(
+            @PathVariable Long id,
+            @RequestBody AtualizarReservaRequest request
+    ) {
+
+        try {
+
+            ReservaResponse response =
+                    reservaService.atualizarParcialDto(id, request);
+
             return ResponseEntity.ok(response);
+
+        } catch (IllegalArgumentException e) {
+
+            if ("Reserva não encontrada.".equals(e.getMessage())) {
+                return ResponseEntity.notFound().build();
+            }
+
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
-        return ResponseEntity.notFound().build();
     }
+
+    // ==========================================
+    // CHECKOUT
+    // ==========================================
 
     @PostMapping("/checkout/{id}")
     @Operation(
             summary = "Realizar checkout",
-            description = "Efetua o checkout de uma reserva, calculando o valor final e liberando o quarto."
+            description = "Finaliza uma reserva, calcula o valor final e libera o quarto quando possível."
     )
-    public ResponseEntity<ReservaResponse> checkout(@PathVariable Long id) {
+    public ResponseEntity<?> checkout(@PathVariable Long id) {
+
         try {
-            ReservaResponse response = reservaService.realizarCheckoutDto(id);
-            if (response != null) {
-                return ResponseEntity.ok(response);
-            }
-            return ResponseEntity.notFound().build();
+
+            ReservaResponse response =
+                    reservaService.realizarCheckoutDto(id);
+
+            return ResponseEntity.ok(response);
+
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
+
+            if ("Reserva não encontrada.".equals(e.getMessage())) {
+                return ResponseEntity.notFound().build();
+            }
+
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    // ==========================================
+    // EXCLUSÃO LÓGICA
+    // ==========================================
 
     @DeleteMapping("/{id}")
     @Operation(
             summary = "Excluir reserva",
-            description = "Efetua a exclusão de uma reserva do sistema."
+            description = "Realiza a exclusão lógica de uma reserva."
     )
-    public ResponseEntity<Void> deletar(@PathVariable Long id) {
-        boolean deletado = reservaService.deletarLogicoOuFisico(id);
-        if (!deletado) {
-            return ResponseEntity.notFound().build();
+    public ResponseEntity<?> deletar(@PathVariable Long id) {
+
+        try {
+
+            reservaService.deletarLogicoOuFisico(id);
+
+            return ResponseEntity.noContent().build();
+
+        } catch (IllegalArgumentException e) {
+
+            if ("Reserva não encontrada.".equals(e.getMessage())) {
+                return ResponseEntity.notFound().build();
+            }
+
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
-        return ResponseEntity.noContent().build();
     }
 }

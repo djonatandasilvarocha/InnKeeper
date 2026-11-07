@@ -4,12 +4,16 @@ package com.example.innkeeper.application.service;
 import com.example.innkeeper.application.DTOs.AtualizarHospedeRequest;
 import com.example.innkeeper.application.DTOs.CriarHospedeRequest;
 import com.example.innkeeper.application.DTOs.HospedeResponse;
+import com.example.innkeeper.application.DTOs.UsuarioLogado;
 import com.example.innkeeper.domain.entities.EnumStatusHospede;
 import com.example.innkeeper.domain.entities.Hospede;
+import com.example.innkeeper.domain.entities.Usuario;
 import com.example.innkeeper.domain.repository.HospedeRepository;
+import com.example.innkeeper.domain.repository.UsuarioRepository;
 import com.example.innkeeper.domain.valueobjects.Celular;
 import com.example.innkeeper.domain.valueobjects.Cpf;
 import com.example.innkeeper.domain.valueobjects.Email;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,36 +24,83 @@ import java.util.stream.Collectors;
 public class HospedeService {
 
     private final HospedeRepository hospedeRepository;
+    private final UsuarioRepository usuarioRepository;
 
-    public HospedeService(HospedeRepository hospedeRepository) {
+    public HospedeService(
+            HospedeRepository hospedeRepository,
+            UsuarioRepository usuarioRepository
+    ) {
         this.hospedeRepository = hospedeRepository;
+        this.usuarioRepository = usuarioRepository;
+    }
+
+    // IDENTIFICAR USUÁRIO AUTENTICADO
+
+    private Usuario buscarUsuarioAutenticado() {
+
+        var authentication = SecurityContextHolder
+                .getContext()
+                .getAuthentication();
+
+        if (authentication == null ||
+                !(authentication.getPrincipal() instanceof UsuarioLogado usuarioLogado)) {
+            throw new IllegalStateException("Usuário não autenticado.");
+        }
+
+        return usuarioRepository.findById(usuarioLogado.id())
+                .orElseThrow(() ->
+                        new IllegalStateException("Usuário não encontrado.")
+                );
     }
 
     // MÉTODOS DE LEITURA
 
     public List<HospedeResponse> listarTodosDto() {
-        return hospedeRepository.findByStatusNot(EnumStatusHospede.EXCLUIDO)
+
+        Usuario usuario = buscarUsuarioAutenticado();
+
+        return hospedeRepository
+                .findByUsuario_IdAndStatusNot(
+                        usuario.getId(),
+                        EnumStatusHospede.EXCLUIDO
+                )
                 .stream()
                 .map(this::converterParaResponse)
                 .collect(Collectors.toList());
     }
 
     public HospedeResponse buscarPorIdDto(Long id) {
+
+        Usuario usuario = buscarUsuarioAutenticado();
+
         return hospedeRepository
-                .findByIdAndStatusNot(id, EnumStatusHospede.EXCLUIDO)
+                .findByIdAndUsuario_IdAndStatusNot(
+                        id,
+                        usuario.getId(),
+                        EnumStatusHospede.EXCLUIDO
+                )
                 .map(this::converterParaResponse)
                 .orElse(null);
     }
 
     public boolean existePorId(Long id) {
+
+        Usuario usuario = buscarUsuarioAutenticado();
+
         return hospedeRepository
-                .findByIdAndStatusNot(id, EnumStatusHospede.EXCLUIDO)
+                .findByIdAndUsuario_IdAndStatusNot(
+                        id,
+                        usuario.getId(),
+                        EnumStatusHospede.EXCLUIDO
+                )
                 .isPresent();
     }
 
     // MÉTODO DE CRIAÇÃO
 
     public HospedeResponse criar(CriarHospedeRequest request) {
+
+        Usuario usuario = buscarUsuarioAutenticado();
 
         if (request.cpf() == null || request.email() == null) {
             throw new IllegalArgumentException(
@@ -69,6 +120,9 @@ public class HospedeService {
 
         hospede.setStatus(EnumStatusHospede.ATIVO);
 
+        // Associar hóspede ao usuário autenticado
+        hospede.setUsuario(usuario);
+
         Hospede salvo = hospedeRepository.save(hospede);
 
         return converterParaResponse(salvo);
@@ -81,9 +135,12 @@ public class HospedeService {
             AtualizarHospedeRequest request
     ) {
 
+        Usuario usuario = buscarUsuarioAutenticado();
+
         Optional<Hospede> hospedeBanco =
-                hospedeRepository.findByIdAndStatusNot(
+                hospedeRepository.findByIdAndUsuario_IdAndStatusNot(
                         id,
+                        usuario.getId(),
                         EnumStatusHospede.EXCLUIDO
                 );
 
@@ -94,6 +151,7 @@ public class HospedeService {
             if (request.nome() == null ||
                     request.cpf() == null ||
                     request.email() == null) {
+
                 throw new IllegalArgumentException(
                         "Nome, CPF e e-mail são obrigatórios."
                 );
@@ -126,9 +184,12 @@ public class HospedeService {
             AtualizarHospedeRequest request
     ) {
 
+        Usuario usuario = buscarUsuarioAutenticado();
+
         Optional<Hospede> hospedeBanco =
-                hospedeRepository.findByIdAndStatusNot(
+                hospedeRepository.findByIdAndUsuario_IdAndStatusNot(
                         id,
+                        usuario.getId(),
                         EnumStatusHospede.EXCLUIDO
                 );
 
@@ -168,9 +229,12 @@ public class HospedeService {
 
     public boolean deletarPorId(Long id) {
 
+        Usuario usuario = buscarUsuarioAutenticado();
+
         Optional<Hospede> hospedeBanco =
-                hospedeRepository.findByIdAndStatusNot(
+                hospedeRepository.findByIdAndUsuario_IdAndStatusNot(
                         id,
+                        usuario.getId(),
                         EnumStatusHospede.EXCLUIDO
                 );
 

@@ -33,6 +33,10 @@ public class Reserva {
     @JoinColumn(name = "quarto_id")
     private Quarto quarto;
 
+    @ManyToOne
+    @JoinColumn(name = "usuario_id")
+    private Usuario usuario;
+
     @Enumerated(EnumType.STRING)
     private EnumStatusReserva status;
 }

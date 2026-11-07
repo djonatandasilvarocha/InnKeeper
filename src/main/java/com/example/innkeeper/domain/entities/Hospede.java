@@ -1,3 +1,4 @@
+
 package com.example.innkeeper.domain.entities;
 
 import com.example.innkeeper.domain.valueobjects.Celular;
@@ -35,4 +36,8 @@ public class Hospede {
 
     @Enumerated(EnumType.STRING)
     private EnumStatusHospede status;
+
+    @ManyToOne
+    @JoinColumn(name = "usuario_id")
+    private Usuario usuario;
 }

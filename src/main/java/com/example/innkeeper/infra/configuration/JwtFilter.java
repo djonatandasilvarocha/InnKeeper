@@ -1,5 +1,5 @@
 
-package com.example.innkeeper.configuration;
+package com.example.innkeeper.infra.configuration;
 
 import com.example.innkeeper.application.service.TokenService;
 import jakarta.servlet.FilterChain;

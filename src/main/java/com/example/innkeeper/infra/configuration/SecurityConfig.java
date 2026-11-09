@@ -1,4 +1,4 @@
-package com.example.innkeeper.configuration;
+package com.example.innkeeper.infra.configuration;
 
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;

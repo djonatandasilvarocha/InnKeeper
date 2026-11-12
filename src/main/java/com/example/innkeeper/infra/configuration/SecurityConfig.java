@@ -1,3 +1,4 @@
+
 package com.example.innkeeper.infra.configuration;
 
 import jakarta.servlet.http.HttpServletResponse;
@@ -24,22 +25,45 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        return http.cors(Customizer.withDefaults())
+
+        return http
+                .cors(Customizer.withDefaults())
+
                 .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+
                 .exceptionHandling(ex -> ex
-                        // Sem autenticação válida -> 401 (em vez do 403 padrão)
+
+                        // Quando o usuário não está autenticado
                         .authenticationEntryPoint((request, response, authException) -> {
+
+                            System.out.println("ERRO DE AUTENTICAÇÃO: " + authException.getMessage());
+
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                             response.setContentType("text/plain;charset=UTF-8");
                             response.getWriter().println("Token invalido");
                         })
+
+                        // Quando o usuário está autenticado, mas não tem permissão
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+
+                            System.out.println("ACESSO NEGADO: " + accessDeniedException.getMessage());
+
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            response.setContentType("text/plain;charset=UTF-8");
+                            response.getWriter().println("Acesso negado");
+                        })
                 )
+
                 .authorizeHttpRequests(auth -> auth
-                        // Pré-flight do CORS
+
+                        // Requisições OPTIONS liberadas
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // Rotas Públicas
+                        // Rotas públicas
                         .requestMatchers(
                                 "/auth/login",
                                 "/usuarios/login",
@@ -49,18 +73,37 @@ public class SecurityConfig {
                                 "/swagger-resources/**",
                                 "/v3/api-docs/**"
                         ).permitAll()
-                        // Cadastro de usuário continua público (GET /usuarios agora exige token)
+
+                        // Cadastro público de usuários
                         .requestMatchers(HttpMethod.POST, "/usuarios").permitAll()
 
-                        // Regras de acesso por Roles (rotas no SINGULAR, como nos controllers)
-                        .requestMatchers(HttpMethod.POST, "/quarto/**").hasAnyRole("ADMIN", "FUNCIONARIO")
-                        .requestMatchers(HttpMethod.DELETE, "/quarto/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/hospede/**").hasAnyRole("ADMIN", "FUNCIONARIO", "HOSPEDE")
+                        // Somente ADMIN pode consultar usuários
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/usuarios",
+                                "/usuarios/**"
+                        ).hasRole("ADMIN")
 
-                        // Qualquer outra rota exige autenticação via Token JWT válido
+                        // Permissões dos quartos
+                        .requestMatchers(HttpMethod.POST, "/quarto/**")
+                        .hasAnyRole("ADMIN", "FUNCIONARIO")
+
+                        .requestMatchers(HttpMethod.DELETE, "/quarto/**")
+                        .hasRole("ADMIN")
+
+                        // Permissões dos hóspedes
+                        .requestMatchers(HttpMethod.GET, "/hospede/**")
+                        .hasAnyRole("ADMIN", "FUNCIONARIO", "HOSPEDE")
+
+                        // Demais rotas exigem autenticação
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+
+                .addFilterBefore(
+                        jwtFilter,
+                        UsernamePasswordAuthenticationFilter.class
+                )
+
                 .build();
     }
 

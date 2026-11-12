@@ -29,10 +29,9 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String uri = request.getRequestURI();
 
-        // Exibe a rota recebida no console do IntelliJ
         System.out.println("URI RECEBIDA: " + uri);
 
-        // Rotas públicas: não precisam de token JWT
+        // Rotas públicas
         if (uri.startsWith("/swagger-ui")
                 || uri.startsWith("/v2/api-docs")
                 || uri.startsWith("/v3/api-docs")
@@ -46,16 +45,13 @@ public class JwtFilter extends OncePerRequestFilter {
             return;
         }
 
-        // Recupera o cabeçalho Authorization
         String authHeader = request.getHeader("Authorization");
 
-        // Verifica se existe um token Bearer
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
 
             String token = authHeader.substring(7);
 
             try {
-                // Valida o token e recupera o usuário
                 var usuarioLogado = tokenService.verificarToken(token);
 
                 var authentication = new UsernamePasswordAuthenticationToken(
@@ -68,21 +64,26 @@ public class JwtFilter extends OncePerRequestFilter {
                         .setAuthentication(authentication);
 
                 System.out.println("TOKEN VALIDADO COM SUCESSO!");
+                System.out.println("USUARIO: " + usuarioLogado.email());
+                System.out.println("AUTHORITIES: " + usuarioLogado.authorities());
+                System.out.println("AUTHENTICATED: " +
+                        SecurityContextHolder.getContext()
+                                .getAuthentication().isAuthenticated());
 
             } catch (Exception e) {
 
-                // Token inválido ou expirado
                 SecurityContextHolder.clearContext();
 
-                // Exibe o erro completo no console
                 System.out.println("ERRO AO VALIDAR TOKEN:");
                 System.out.println("Mensagem: " + e.getMessage());
 
                 e.printStackTrace();
             }
+
+        } else {
+            System.out.println("NENHUM TOKEN BEARER RECEBIDO!");
         }
 
-        // Continua a execução para o SecurityConfig decidir o acesso
         filterChain.doFilter(request, response);
     }
 }

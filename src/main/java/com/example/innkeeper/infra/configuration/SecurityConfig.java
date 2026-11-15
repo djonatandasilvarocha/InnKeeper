@@ -28,7 +28,6 @@ public class SecurityConfig {
 
         return http
                 .cors(Customizer.withDefaults())
-
                 .csrf(AbstractHttpConfigurer::disable)
 
                 .sessionManagement(session ->
@@ -37,9 +36,7 @@ public class SecurityConfig {
 
                 .exceptionHandling(ex -> ex
 
-                        // Quando o usuário não está autenticado
                         .authenticationEntryPoint((request, response, authException) -> {
-
                             System.out.println("ERRO DE AUTENTICAÇÃO: " + authException.getMessage());
 
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -47,9 +44,7 @@ public class SecurityConfig {
                             response.getWriter().println("Token invalido");
                         })
 
-                        // Quando o usuário está autenticado, mas não tem permissão
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
-
                             System.out.println("ACESSO NEGADO: " + accessDeniedException.getMessage());
 
                             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
@@ -58,12 +53,16 @@ public class SecurityConfig {
                         })
                 )
 
+                // ==========================================
+                // TESTE DA PROVA - PARTE 1
+                // Substituir temporariamente este bloco
+                // por uma regra que libera todas as rotas.
+                // ==========================================
+
                 .authorizeHttpRequests(auth -> auth
 
-                        // Requisições OPTIONS liberadas
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // Rotas públicas
                         .requestMatchers(
                                 "/auth/login",
                                 "/usuarios/login",
@@ -74,30 +73,30 @@ public class SecurityConfig {
                                 "/v3/api-docs/**"
                         ).permitAll()
 
-                        // Cadastro público de usuários
                         .requestMatchers(HttpMethod.POST, "/usuarios").permitAll()
 
-                        // Somente ADMIN pode consultar usuários
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/usuarios",
                                 "/usuarios/**"
                         ).hasRole("ADMIN")
 
-                        // Permissões dos quartos
                         .requestMatchers(HttpMethod.POST, "/quarto/**")
                         .hasAnyRole("ADMIN", "FUNCIONARIO")
 
                         .requestMatchers(HttpMethod.DELETE, "/quarto/**")
                         .hasRole("ADMIN")
 
-                        // Permissões dos hóspedes
                         .requestMatchers(HttpMethod.GET, "/hospede/**")
                         .hasAnyRole("ADMIN", "FUNCIONARIO", "HOSPEDE")
 
-                        // Demais rotas exigem autenticação
                         .anyRequest().authenticated()
                 )
+
+                // ==========================================
+                // TESTE DA PROVA - PARTE 2
+                // Comentar temporariamente o filtro JWT.
+                // ==========================================
 
                 .addFilterBefore(
                         jwtFilter,

@@ -1,21 +1,31 @@
+
 "use client";
 
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Quarto, QuartoFormProps } from "@/app/types/quarto";
-import { salvarQuarto, atualizarQuarto } from "@/app/services/quartoService";
 
-export default function QuartoForm({ quartoExistente }: QuartoFormProps) {
+import { Quarto, QuartoFormProps } from "@/app/types/quarto";
+import {
+  salvarQuarto,
+  atualizarQuarto
+} from "@/app/services/quartoService";
+
+export default function QuartoForm({
+  quartoExistente
+}: QuartoFormProps) {
+
   const router = useRouter();
 
   const [quarto, setQuarto] = useState<Quarto>(
-    quartoExistente || new Quarto(null, "", "Standard", 2, 0, "DISPONIVEL")
+    quartoExistente ||
+      new Quarto(null, "", "Standard", 2, 0, "DISPONIVEL")
   );
 
+  // Atualizar os campos do formulário
   const handlerChange = (
     campo: "numero" | "tipo" | "capacidade" | "diaria" | "status",
-    valor: any
+    valor: string
   ) => {
     setQuarto(
       (valorAnterior) =>
@@ -23,15 +33,23 @@ export default function QuartoForm({ quartoExistente }: QuartoFormProps) {
           valorAnterior.id,
           campo === "numero" ? valor : valorAnterior.numero,
           campo === "tipo" ? valor : valorAnterior.tipo,
-          campo === "capacidade" ? Number(valor) : valorAnterior.capacidade,
-          campo === "diaria" ? Number(valor) : valorAnterior.diaria,
+          campo === "capacidade"
+            ? Number(valor)
+            : valorAnterior.capacidade,
+          campo === "diaria"
+            ? Number(valor)
+            : valorAnterior.diaria,
           campo === "status" ? valor : valorAnterior.status
         )
     );
   };
 
-  const handlerSalvar = async (e: React.FormEvent<HTMLFormElement>) => {
+  // Cadastrar ou atualizar quarto
+  const handlerSalvar = async (
+    e: React.FormEvent<HTMLFormElement>
+  ) => {
     e.preventDefault();
+
     try {
       if (quartoExistente) {
         await atualizarQuarto(quarto);
@@ -43,7 +61,8 @@ export default function QuartoForm({ quartoExistente }: QuartoFormProps) {
 
       router.push("/quarto");
       router.refresh();
-    } catch (error) {
+
+    } catch {
       alert("Erro ao salvar quarto!");
     }
   };
@@ -54,29 +73,38 @@ export default function QuartoForm({ quartoExistente }: QuartoFormProps) {
       className="w-full max-w-2xl mx-auto bg-[#0b1120] border border-slate-800 rounded-xl p-8 shadow-2xl"
     >
       <div className="space-y-6">
+
+        {/* NÚMERO DO QUARTO */}
         <div>
           <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
             Número do Quarto:
           </label>
+
           <input
             name="numero"
             type="text"
             value={quarto.numero}
             required
-            onChange={(e) => handlerChange("numero", e.target.value)}
+            onChange={(e) =>
+              handlerChange("numero", e.target.value)
+            }
             placeholder="Ex: 101, 202, A-01"
             className="w-full bg-[#030712] border border-slate-800 rounded-lg px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all duration-200"
           />
         </div>
 
+        {/* TIPO DO QUARTO */}
         <div>
           <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
             Tipo de Quarto:
           </label>
+
           <select
             name="tipo"
             value={quarto.tipo}
-            onChange={(e) => handlerChange("tipo", e.target.value)}
+            onChange={(e) =>
+              handlerChange("tipo", e.target.value)
+            }
             className="w-full bg-[#030712] border border-slate-800 rounded-lg px-4 py-3 text-slate-100 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all duration-200"
           >
             <option value="Solteiro">Solteiro</option>
@@ -87,25 +115,31 @@ export default function QuartoForm({ quartoExistente }: QuartoFormProps) {
           </select>
         </div>
 
+        {/* CAPACIDADE */}
         <div>
           <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
             Capacidade (Pessoas):
           </label>
+
           <input
             name="capacidade"
             type="number"
             min="1"
             value={quarto.capacidade}
             required
-            onChange={(e) => handlerChange("capacidade", e.target.value)}
+            onChange={(e) =>
+              handlerChange("capacidade", e.target.value)
+            }
             className="w-full bg-[#030712] border border-slate-800 rounded-lg px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all duration-200"
           />
         </div>
 
+        {/* VALOR DA DIÁRIA */}
         <div>
           <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
             Valor da Diária (R$):
           </label>
+
           <input
             name="diaria"
             type="number"
@@ -113,20 +147,26 @@ export default function QuartoForm({ quartoExistente }: QuartoFormProps) {
             min="0"
             value={quarto.diaria}
             required
-            onChange={(e) => handlerChange("diaria", e.target.value)}
+            onChange={(e) =>
+              handlerChange("diaria", e.target.value)
+            }
             placeholder="0.00"
             className="w-full bg-[#030712] border border-slate-800 rounded-lg px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all duration-200"
           />
         </div>
 
+        {/* STATUS */}
         <div>
           <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
             Status:
           </label>
+
           <select
             name="status"
             value={quarto.status}
-            onChange={(e) => handlerChange("status", e.target.value)}
+            onChange={(e) =>
+              handlerChange("status", e.target.value)
+            }
             className="w-full bg-[#030712] border border-slate-800 rounded-lg px-4 py-3 text-slate-100 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all duration-200"
           >
             <option value="DISPONIVEL">DISPONIVEL</option>
@@ -135,19 +175,23 @@ export default function QuartoForm({ quartoExistente }: QuartoFormProps) {
           </select>
         </div>
 
+        {/* BOTÕES */}
         <div className="flex items-center justify-end gap-4 pt-4 border-t border-slate-800/80">
+
           <Link
             href="/quarto"
             className="px-5 py-2.5 text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 rounded-lg transition-all duration-200"
           >
             Cancelar
           </Link>
+
           <button
             type="submit"
             className="px-6 py-2.5 text-sm font-semibold text-slate-950 bg-teal-400 hover:bg-teal-300 rounded-lg shadow-md hover:shadow-teal-500/10 active:scale-[0.98] transition-all duration-200"
           >
             Salvar
           </button>
+
         </div>
       </div>
     </form>

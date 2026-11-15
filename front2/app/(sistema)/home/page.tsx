@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -7,7 +8,7 @@ export default function Home() {
     <div className="min-h-full bg-slate-950 text-slate-100 p-6 md:p-10 flex flex-col justify-between font-sans space-y-10">
       {/* Conteúdo Principal / Banner */}
       <div className="space-y-8">
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-slate-900/90 to-teal-950/40 border border-slate-800/80 p-8 md:p-12 shadow-2xl">
+        <div className="relative overflow-hidden rounded-3xl bg-linear-to-r from-slate-900 via-slate-900/90 to-teal-950/40 border border-slate-800/80 p-8 md:p-12 shadow-2xl">
           <div className="relative z-10 max-w-2xl space-y-4">
             <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-teal-500/10 text-teal-400 border border-teal-500/20">
               <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
@@ -16,7 +17,7 @@ export default function Home() {
 
             <h1 className="text-3xl sm:text-5xl font-extrabold text-slate-50 tracking-tight leading-tight">
               Bem-vindo ao sistema de gestão de{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-emerald-400">
+              <span className="text-transparent bg-clip-text bg-linear-to-r from-teal-400 to-emerald-400">
                 Hospedagens!
               </span>
             </h1>
@@ -28,17 +29,27 @@ export default function Home() {
             <div className="pt-2 flex flex-wrap gap-4">
               <Link
                 href="/reserva"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 text-slate-950 font-semibold hover:from-teal-400 hover:to-emerald-400 transition-all duration-200 shadow-lg shadow-teal-500/20 active:scale-95 text-sm"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-linear-to-r from-teal-500 to-emerald-500 text-slate-950 font-semibold hover:from-teal-400 hover:to-emerald-400 transition-all duration-200 shadow-lg shadow-teal-500/20 active:scale-95 text-sm"
               >
                 Gerenciar Reservas
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M14 5l7 7m0 0l-7 7m7-7H3"
+                  />
                 </svg>
               </Link>
             </div>
           </div>
 
-          {/* Luz de fundo decorativa (Glow) */}
+          {/* Luz de fundo decorativa */}
           <div className="absolute top-1/2 -right-10 -translate-y-1/2 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
         </div>
 
@@ -49,6 +60,7 @@ export default function Home() {
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+
             {/* Módulo Hóspedes */}
             <Link
               href="/hospede"
@@ -57,6 +69,7 @@ export default function Home() {
               <div className="w-12 h-12 rounded-xl bg-teal-950 border border-teal-500/30 text-teal-400 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
                 👤
               </div>
+
               <div>
                 <h3 className="text-base font-bold text-slate-100 group-hover:text-teal-400 transition-colors">
                   Hóspedes
@@ -75,6 +88,7 @@ export default function Home() {
               <div className="w-12 h-12 rounded-xl bg-teal-950 border border-teal-500/30 text-teal-400 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
                 🛏️
               </div>
+
               <div>
                 <h3 className="text-base font-bold text-slate-100 group-hover:text-teal-400 transition-colors">
                   Quartos
@@ -93,6 +107,7 @@ export default function Home() {
               <div className="w-12 h-12 rounded-xl bg-teal-950 border border-teal-500/30 text-teal-400 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
                 📅
               </div>
+
               <div>
                 <h3 className="text-base font-bold text-slate-100 group-hover:text-teal-400 transition-colors">
                   Reservas
@@ -111,6 +126,7 @@ export default function Home() {
               <div className="w-12 h-12 rounded-xl bg-teal-950 border border-teal-500/30 text-teal-400 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
                 ⚙️
               </div>
+
               <div>
                 <h3 className="text-base font-bold text-slate-100 group-hover:text-teal-400 transition-colors">
                   Usuários
@@ -120,6 +136,7 @@ export default function Home() {
                 </p>
               </div>
             </Link>
+
           </div>
         </div>
       </div>

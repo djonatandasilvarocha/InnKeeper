@@ -1,58 +1,111 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+
 import { Hospede } from "@/app/types/hospede";
-import { buscarListaHospedes, deletarHospede } from "@/app/services/hospedeService";
+import {
+  buscarListaHospedes,
+  deletarHospede
+} from "@/app/services/hospedeService";
+
+function formatarCampo(campo: unknown): string {
+  if (campo === null || campo === undefined) {
+    return "";
+  }
+
+  if (typeof campo === "object") {
+    if ("value" in campo) {
+      return String(campo.value ?? "");
+    }
+
+    return JSON.stringify(campo);
+  }
+
+  return String(campo);
+}
 
 export default function Hospedes() {
   const [hospedes, setHospedes] = useState<Hospede[]>([]);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState("");
 
   useEffect(() => {
-    carregarDados();
+    let ativo = true;
+
+    async function carregarHospedes() {
+      try {
+        const lista = await buscarListaHospedes();
+
+        if (ativo) {
+          setHospedes(lista);
+        }
+      } catch {
+        if (ativo) {
+          setErro("Erro ao carregar a lista de hóspedes!");
+        }
+      } finally {
+        if (ativo) {
+          setCarregando(false);
+        }
+      }
+    }
+
+    void carregarHospedes();
+
+    return () => {
+      ativo = false;
+    };
   }, []);
 
   const carregarDados = async () => {
+    setCarregando(true);
+    setErro("");
+
     try {
       const lista = await buscarListaHospedes();
       setHospedes(lista);
-    } catch (error) {
-      alert("Erro ao carregar lista de hóspedes!");
+    } catch {
+      setErro("Erro ao carregar a lista de hóspedes!");
+    } finally {
+      setCarregando(false);
     }
   };
 
   const handleDeletarHospede = async (hospede: Hospede) => {
-    if (!confirm(`Deseja realmente excluir o hóspede ${typeof hospede.nome === 'object' ? (hospede.nome as any).value : hospede.nome}?`)) return;
+    if (hospede.id === null) return;
+
+    const confirmado = window.confirm(
+      `Deseja realmente excluir o hóspede ${formatarCampo(hospede.nome)}?`
+    );
+
+    if (!confirmado) return;
 
     try {
-      const status = await deletarHospede(hospede.id as number);
+      const status = await deletarHospede(hospede.id);
 
       if (status === 200 || status === 204) {
-        alert("Excluído com sucesso!");
-        carregarDados();
+        alert("Hóspede excluído com sucesso!");
+        await carregarDados();
       } else {
         alert("Não foi possível excluir o hóspede.");
       }
-    } catch (error) {
+    } catch {
       alert("Erro ao excluir hóspede!");
     }
   };
 
-  const formatarCampo = (campo: any): string => {
-    if (!campo) return "";
-    if (typeof campo === "object" && campo !== null) {
-      return campo.value || JSON.stringify(campo);
-    }
-    return String(campo);
-  };
-
   return (
     <div className="bg-slate-950 text-slate-100 p-6 md:p-10 space-y-8 font-sans">
+
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-50">
             Gestão de <span className="text-teal-400">Hóspedes</span>
           </h1>
+
           <p className="text-slate-400 text-sm mt-1">
             Gerencie os cadastros e dados de contato dos hóspedes.
           </p>
@@ -60,24 +113,55 @@ export default function Hospedes() {
 
         <Link
           href="/hospede/novo"
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 text-slate-950 font-semibold hover:from-teal-400 hover:to-emerald-400 transition-all duration-200 shadow-lg shadow-teal-500/10 active:scale-95 text-sm"
+          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-linear-to-r from-teal-500 to-emerald-500 text-slate-950 font-semibold hover:from-teal-400 hover:to-emerald-400 transition-all duration-200 shadow-lg shadow-teal-500/10 active:scale-95 text-sm"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M12 4v16m8-8H4"
+            />
           </svg>
           Novo Hóspede
         </Link>
       </div>
 
+      {erro && (
+        <div className="p-4 rounded-xl bg-red-950/30 border border-red-500/30 text-red-400 text-sm">
+          {erro}
+        </div>
+      )}
+
       <div className="bg-slate-900/80 border border-slate-800/80 rounded-2xl shadow-xl overflow-hidden backdrop-blur-md">
+
         <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/40">
           <span className="text-xs text-slate-400">
-            Total: <strong className="text-slate-200">{hospedes.length}</strong> hóspedes cadastrados
+            Total:{" "}
+            <strong className="text-slate-200">
+              {hospedes.length}
+            </strong>{" "}
+            hóspedes cadastrados
           </span>
+
+          <button
+            type="button"
+            onClick={carregarDados}
+            disabled={carregando}
+            className="text-xs text-teal-400 hover:text-teal-300 disabled:opacity-50"
+          >
+            Atualizar
+          </button>
         </div>
 
         <div className="overflow-x-auto w-full">
           <table className="w-full text-left border-collapse">
+
             <thead>
               <tr className="bg-slate-950/60 border-b border-slate-800 text-xs uppercase tracking-wider text-slate-400">
                 <th className="py-3.5 px-6 font-semibold">Código</th>
@@ -90,49 +174,75 @@ export default function Hospedes() {
             </thead>
 
             <tbody className="divide-y divide-slate-800/60 text-sm">
+
               {hospedes.map((hospede) => (
-                <tr key={hospede.id} className="hover:bg-slate-800/40 transition-colors">
+                <tr
+                  key={hospede.id}
+                  className="hover:bg-slate-800/40 transition-colors"
+                >
                   <td className="py-4 px-6 font-mono text-xs text-teal-400">
                     #{hospede.id}
                   </td>
+
                   <td className="py-4 px-6 font-medium text-slate-200">
                     {formatarCampo(hospede.nome)}
                   </td>
+
                   <td className="py-4 px-6 text-slate-400 font-mono text-xs">
                     {formatarCampo(hospede.cpf)}
                   </td>
+
                   <td className="py-4 px-6 text-slate-400">
                     {formatarCampo(hospede.email)}
                   </td>
+
                   <td className="py-4 px-6 text-slate-400">
                     {formatarCampo(hospede.telefone)}
                   </td>
+
                   <td className="py-4 px-6 text-right">
                     <div className="inline-flex items-center gap-3">
+
                       <Link
                         href={`/hospede/${hospede.id}/editar`}
                         className="text-xs font-medium text-slate-300 hover:text-teal-400 transition-colors"
                       >
                         Editar
                       </Link>
+
                       <button
+                        type="button"
                         onClick={() => handleDeletarHospede(hospede)}
                         className="text-xs font-medium text-rose-500 hover:text-rose-400 transition-colors"
                       >
                         Deletar
                       </button>
+
                     </div>
                   </td>
                 </tr>
               ))}
 
-              {hospedes.length === 0 && (
+              {carregando ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-slate-500 italic">
+                  <td
+                    colSpan={6}
+                    className="py-12 text-center text-slate-400"
+                  >
+                    Carregando hóspedes...
+                  </td>
+                </tr>
+              ) : hospedes.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="py-12 text-center text-slate-500 italic"
+                  >
                     Nenhum hóspede encontrado!
                   </td>
                 </tr>
-              )}
+              ) : null}
+
             </tbody>
           </table>
         </div>

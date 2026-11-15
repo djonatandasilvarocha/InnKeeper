@@ -59,7 +59,7 @@ export default function Login() {
 
             router.push("/home");
 
-        } catch (error) {
+        } catch {
             alert("E-mail ou senha inválidos!");
         } finally {
             setLoading(false);
@@ -69,7 +69,7 @@ export default function Login() {
     return (
         <div className="relative min-h-screen w-full flex items-center justify-center bg-slate-50 p-4 antialiased overflow-hidden selection:bg-teal-500 selection:text-white">
 
-            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-to-tr from-teal-400/20 to-emerald-300/20 rounded-full blur-3xl pointer-events-none -z-10 animate-pulse" />
+            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-125 h-125 bg-linear-to-tr from-teal-400/20 to-emerald-300/20 rounded-full blur-3xl pointer-events-none -z-10 animate-pulse" />
 
             <div className="absolute bottom-10 right-10 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl pointer-events-none -z-10" />
 
@@ -77,7 +77,7 @@ export default function Login() {
 
                 <div>
                     <div className="flex justify-center mb-6">
-                        <div className="w-12 h-12 bg-gradient-to-tr from-teal-600 via-emerald-500 to-cyan-400 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-teal-500/25">
+                        <div className="w-12 h-12 bg-linear-to-tr from-teal-600 via-emerald-500 to-cyan-400 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-teal-500/25">
 
                             <svg
                                 width="24"
@@ -141,7 +141,7 @@ export default function Login() {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full h-12 flex items-center justify-center bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-teal-600/30 hover:shadow-teal-600/40 transition-all duration-200 ease-in-out active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 mt-6 disabled:opacity-50"
+                        className="w-full h-12 flex items-center justify-center bg-linear-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-teal-600/30 hover:shadow-teal-600/40 transition-all duration-200 ease-in-out active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 mt-6 disabled:opacity-50"
                     >
                         {loading ? "Entrando..." : "Entrar"}
                     </button>
